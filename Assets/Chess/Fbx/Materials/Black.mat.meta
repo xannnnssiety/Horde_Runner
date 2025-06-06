@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 76c7f7053d1824d0189161ecc6203310
+timeCreated: 1510262675
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 104629
+  packageName: Low Poly - Chess set
+  packageVersion: 1.0
+  assetPath: Assets/Chess/Fbx/Materials/Black.mat
+  uploadId: 251959

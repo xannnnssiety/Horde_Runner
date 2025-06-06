@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 95607dbe2e7c3481c90296c75fb23104
+timeCreated: 1510091224
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 104629
+  packageName: Low Poly - Chess set
+  packageVersion: 1.0
+  assetPath: Assets/Chess/Materials/White.mat
+  uploadId: 251959
