@@ -56,6 +56,13 @@ public class PlayerMovement : MonoBehaviour
         HandleGroundCheck();
         HandlePlayerActions();
         ApplyGravityAndFinalMove();
+
+        if (Input.GetKeyDown(KeyCode.U))
+        {
+            // Добавляем +10% к радиусу всех скиллов
+            PlayerStatsManager.Instance.AddAreaBonus(0.1f);
+        }
+
     }
 
     void HandleGroundCheck()

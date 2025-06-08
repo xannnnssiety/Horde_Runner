@@ -6,6 +6,7 @@ TagManager:
   tags:
   - EnemySpawnPoint
   - Wall
+  - SwarmSpawnPoint
   layers:
   - Default
   - TransparentFX

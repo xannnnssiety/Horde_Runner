@@ -290,6 +290,7 @@ public class EnemyAI : MonoBehaviour
     {
         Debug.Log(gameObject.name + " умер!");
         ReleaseFormationSlot(); // Убедимся, что слот освобожден при смерти
+        RunStatsManager.Instance.RegisterKill();
         Destroy(gameObject);
     }
 
