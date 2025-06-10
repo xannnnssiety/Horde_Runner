@@ -81,19 +81,6 @@ public class AuraDamageSkill : BaseSkill // !!! Наследуемся от BaseSkill
             vfxAura.SetFloat("AuraRadius", currentRadius);
         }
 
-        // --- ПРИМЕР ИНТЕГРАЦИИ С SHADER GRAPH (через материал) ---
-        /*
-        Renderer visualRenderer = GetComponentInChildren<Renderer>();
-        if (visualRenderer != null)
-        {
-            // Создаем MaterialPropertyBlock для эффективности
-            var propertyBlock = new MaterialPropertyBlock();
-            visualRenderer.GetPropertyBlock(propertyBlock);
-            // У шейдера должна быть переменная (Reference) с именем "_AuraSize"
-            propertyBlock.SetFloat("_AuraSize", currentRadius);
-            visualRenderer.SetPropertyBlock(propertyBlock);
-        }
-        */
     }
 
     private IEnumerator DamageTickCoroutine()

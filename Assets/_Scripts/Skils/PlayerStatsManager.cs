@@ -18,6 +18,12 @@ public class PlayerStatsManager : MonoBehaviour
     [Tooltip("Множитель для урона. 0.1 = +10% Damage")]
     public float damageMultiplier = 0f;
 
+    [Tooltip("Множитель для скорости перезарядки. 0.1 = +10% Cooldown Speed (уменьшает время)")]
+    public float cooldownMultiplier = 0f;
+
+    [Tooltip("Дополнительное количество снарядов/объектов.")]
+    public int amountBonus = 0;
+
     // ... здесь можно будет добавить duration, cooldown, amount и т.д.
 
     // Событие, которое оповещает все скиллы о том, что статы изменились.
@@ -43,6 +49,8 @@ public class PlayerStatsManager : MonoBehaviour
         areaMultiplier = 0f;
         sizeMultiplier = 0f;
         damageMultiplier = 0f;
+        cooldownMultiplier = 0f;
+        amountBonus = 0;
 
         // Оповещаем подписчиков о сбросе
         OnStatsChanged?.Invoke();
@@ -71,4 +79,19 @@ public class PlayerStatsManager : MonoBehaviour
         Debug.Log($"Damage bonus added: {percentage * 100}%. New multiplier: {damageMultiplier}");
         OnStatsChanged?.Invoke();
     }
+
+    public void AddCooldownBonus(float percentage)
+    {
+        cooldownMultiplier += percentage;
+        Debug.Log($"Cooldown bonus added: {percentage * 100}%. New multiplier: {cooldownMultiplier}");
+        OnStatsChanged?.Invoke();
+    }
+
+    public void AddAmountBonus(int amount)
+    {
+        amountBonus += amount;
+        Debug.Log($"Amount bonus added: {amount}. New bonus: {amountBonus}");
+        OnStatsChanged?.Invoke();
+    }
+
 }
