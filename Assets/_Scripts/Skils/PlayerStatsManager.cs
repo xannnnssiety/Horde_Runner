@@ -24,6 +24,9 @@ public class PlayerStatsManager : MonoBehaviour
     [Tooltip("Дополнительное количество снарядов/объектов.")]
     public int amountBonus = 0;
 
+    [Tooltip("Множитель для скорости снарядов. 0.1 = +10% Speed")]
+    public float projectileSpeedMultiplier = 0f;
+
     // ... здесь можно будет добавить duration, cooldown, amount и т.д.
 
     // Событие, которое оповещает все скиллы о том, что статы изменились.
@@ -51,6 +54,7 @@ public class PlayerStatsManager : MonoBehaviour
         damageMultiplier = 0f;
         cooldownMultiplier = 0f;
         amountBonus = 0;
+        projectileSpeedMultiplier = 0f;
 
         // Оповещаем подписчиков о сбросе
         OnStatsChanged?.Invoke();
@@ -91,6 +95,13 @@ public class PlayerStatsManager : MonoBehaviour
     {
         amountBonus += amount;
         Debug.Log($"Amount bonus added: {amount}. New bonus: {amountBonus}");
+        OnStatsChanged?.Invoke();
+    }
+
+    public void AddProjectileSpeedBonus(float percentage)
+    {
+        projectileSpeedMultiplier += percentage;
+        Debug.Log($"Projectile Speed bonus added: {percentage * 100}%. New multiplier: {projectileSpeedMultiplier}");
         OnStatsChanged?.Invoke();
     }
 

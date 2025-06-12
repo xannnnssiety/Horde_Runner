@@ -1,141 +1,131 @@
 using UnityEngine;
 using System.Collections;
-using System.Linq;
 
 public class ProjectileSkill : BaseSkill
 {
-    [Header("Projectile Base Settings")]
-    public GameObject projectilePrefab; // Сюда перетащить наш префаб
+    [Header("Projectile Skill Settings")]
+    public GameObject projectilePrefab;
     public float baseDamage = 15;
     public float baseCooldown = 2.0f;
     public float baseProjectileSpeed = 20f;
-    public int baseAmount = 1; // Кол-во снарядов за раз
-    public float baseProjectileSize = 1f; // Базовый размер снаряда
-    public float baseLifetime = 5f; // Базовое время жизни
+    public int baseAmount = 1;
+    public float baseProjectileSize = 1f;
+    public float baseLifetime = 5f;
+    public float searchRadius = 50f;
     public LayerMask enemyLayerMask;
-    public float searchRadius = 50f; // Радиус поиска врагов
+    [Tooltip("Задержка между снарядами в одном залпе")]
+    public float delayBetweenShots = 0.08f; // <-- Добавил в инспектор для удобства
+    [Tooltip("Точка, из которой будут вылетать снаряды")]
+    public Transform firePoint;
 
-    // Текущие, расчетные значения
-    private float currentDamage;
+    // Расчетные значения
+    private int currentDamage;
     private float currentCooldown;
     private float currentProjectileSpeed;
     private int currentAmount;
     private float currentProjectileSize;
 
-    [Tooltip("Точка, из которой будут вылетать снаряды. Если не указана, используется позиция этого объекта.")]
-    public Transform firePoint;
-
-
     void Start()
     {
-        // Запускаем бесконечный цикл стрельбы
-        StartCoroutine(FireCoroutine());
+        // Запускаем основной цикл, отвечающий за кулдаун между ЗАЛПАМИ
+        StartCoroutine(FireCycleCoroutine());
     }
 
     protected override void UpdateSkillStats()
     {
         if (PlayerStatsManager.Instance == null) return;
-
-        // Получаем глобальные множители
         var stats = PlayerStatsManager.Instance;
+
         float damageMult = stats.damageMultiplier;
         float sizeMult = stats.sizeMultiplier;
-        // !!! Нам понадобятся новые множители в PlayerStatsManager
-        float cooldownMult = stats.cooldownMultiplier; // Предполагаем, что он есть
-        int amountBonus = stats.amountBonus; // Предполагаем, что он есть
+        float cooldownMult = stats.cooldownMultiplier;
+        int amountBonus = stats.amountBonus;
+        float speedMult = stats.projectileSpeedMultiplier;
 
-        // Рассчитываем текущие параметры
-        currentDamage = baseDamage * (1f + damageMult);
-        currentCooldown = baseCooldown / (1f + cooldownMult); // Кулдаун уменьшается!
+        currentDamage = Mathf.RoundToInt(baseDamage * (1f + damageMult));
+        currentCooldown = baseCooldown / (1f + cooldownMult);
         currentAmount = baseAmount + amountBonus;
         currentProjectileSize = baseProjectileSize * (1f + sizeMult);
 
-        // Скорость и время жизни пока не меняем, но можно добавить множители и для них
-        currentProjectileSpeed = baseProjectileSpeed;
+        // --- ИСПРАВЛЕНИЕ ЗДЕСЬ ---
+        // Теперь скорость снарядов корректно учитывает бонус
+        currentProjectileSpeed = baseProjectileSpeed * (1f + speedMult);
     }
 
-    private IEnumerator FireCoroutine()
+    // Этот цикл ждет основной кулдаун, находит цель и запускает один залп
+    private IEnumerator FireCycleCoroutine()
     {
         while (true)
         {
-            // Ждем перезарядки
             yield return new WaitForSeconds(currentCooldown);
 
-            // Ищем цели
-            Collider[] allTargets = Physics.OverlapSphere(transform.position, searchRadius, enemyLayerMask);
+            Transform closestTarget = FindClosestEnemy();
 
-            if (allTargets.Length > 0)
+            if (closestTarget != null)
             {
-                // Находим ближайшую цель
-                Transform closestTarget = null;
-                float minDistance = float.MaxValue;
-
-                foreach (var targetCollider in allTargets)
-                {
-                    if (targetCollider.TryGetComponent<EnemyAI>(out _) || targetCollider.TryGetComponent<ProjectileEnemyAI>(out _))
-                    {
-                        float distance = Vector3.Distance(transform.position, targetCollider.transform.position);
-                        if (distance < minDistance)
-                        {
-                            minDistance = distance;
-                            closestTarget = targetCollider.transform;
-                        }
-                    }
-                }
-
-                // Если ближайшая цель найдена, выпускаем в нее все снаряды
-                if (closestTarget != null)
-                {
-                    for (int i = 0; i < currentAmount; i++)
-                    {
-
-                        StartCoroutine(FireBurstCoroutine(currentAmount, closestTarget));
-                        
-
-                    }
-                }
+                // Запускаем корутину одного залпа, передавая ей цель
+                StartCoroutine(FireVolleyCoroutine(closestTarget));
             }
         }
     }
 
-    private IEnumerator FireBurstCoroutine(int amountToFire, Transform target)
+    // Эта корутина отвечает за выпуск одного полного залпа в выбранную цель
+    private IEnumerator FireVolleyCoroutine(Transform target)
     {
-        // Эта корутина "запомнила" количество снарядов (amountToFire) в момент своего запуска.
-        // Даже если currentAmount изменится, пока она работает, она выпустит ровно столько снарядов,
-        // сколько ей сказали.
-        for (int i = 0; i < amountToFire; i++)
+        for (int i = 0; i < currentAmount; i++)
         {
-            // Проверяем, существует ли цель до сих пор, перед каждым выстрелом
-            if (target != null && target.gameObject.activeInHierarchy)
+            // Перед каждым выстрелом проверяем, жива ли еще цель
+            if (target == null || !target.gameObject.activeInHierarchy)
             {
-                FireProjectile(target);
-                // Ваша задержка между выстрелами в очереди
-                yield return new WaitForSeconds(0.05f);
+                yield break; // Если цель умерла, прекращаем залп
             }
-            else
-            {
-                // Если цель исчезла в середине очереди, просто прекращаем стрельбу
-                yield break;
-            }
+
+            FireProjectile(target);
+
+            // Ждем небольшую задержку перед запуском следующего снаряда
+            yield return new WaitForSeconds(delayBetweenShots);
         }
     }
 
+    // Метод для выстрела одним снарядом
     private void FireProjectile(Transform target)
     {
         if (projectilePrefab == null) return;
 
-        // Определяем точку спавна
         Vector3 spawnPosition = (firePoint != null) ? firePoint.position : transform.position;
-        // Определяем начальное вращение - пусть снаряд смотрит на цель сразу
         Quaternion initialRotation = Quaternion.LookRotation(target.position - spawnPosition);
 
         GameObject projectileGO = Instantiate(projectilePrefab, spawnPosition, initialRotation);
 
-        if (projectileGO.TryGetComponent<SkillProjectile>(out SkillProjectile projectile))
+        if (projectileGO.TryGetComponent<SkillProjectile>(out var projectile))
         {
-            int damageToDeal = Mathf.RoundToInt(currentDamage);
-            // Передаем цель в снаряд, чтобы он знал, куда лететь
-            projectile.Initialize(damageToDeal, currentProjectileSpeed, currentProjectileSize, target, enemyLayerMask, baseLifetime);
+            // --- ИЗМЕНЕНИЕ ЗДЕСЬ ---
+            // Теперь передаем и 'this' для отчета об уроне
+            projectile.Initialize(this, currentDamage, currentProjectileSpeed, currentProjectileSize, target, enemyLayerMask, baseLifetime);
         }
+    }
+
+    // Вспомогательный метод для поиска врага (чтобы не загромождать корутину)
+    private Transform FindClosestEnemy()
+    {
+        Collider[] allTargets = Physics.OverlapSphere(transform.position, searchRadius, enemyLayerMask);
+        Transform closestTarget = null;
+        float minDistance = float.MaxValue;
+
+        if (allTargets.Length == 0) return null;
+
+        foreach (var targetCollider in allTargets)
+        {
+            if (targetCollider.TryGetComponent<EnemyAI>(out _) || targetCollider.TryGetComponent<ProjectileEnemyAI>(out _))
+            {
+                float distance = Vector3.Distance(transform.position, targetCollider.transform.position);
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    closestTarget = targetCollider.transform;
+                }
+            }
+        }
+        return closestTarget;
     }
 }

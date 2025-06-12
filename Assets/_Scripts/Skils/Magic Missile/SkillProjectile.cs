@@ -11,15 +11,16 @@ public class SkillProjectile : MonoBehaviour
     private Transform target;
     private LayerMask enemyLayerMask;
     private float size; // Размер для масштабирования
-    
+    private BaseSkill ownerSkill;
+
 
     [Tooltip("Ссылка на VFX компонент на этом объекте")]
     [SerializeField] private VisualEffect projectileVFX;
 
     // Этот метод будет вызван сразу после создания снаряда
-    public void Initialize(int damage, float speed, float size, Transform target, LayerMask enemyLayerMask, float lifetime)
+    public void Initialize(BaseSkill owner, int damage, float speed, float size, Transform target, LayerMask enemyLayerMask, float lifetime)
     {
-        
+        this.ownerSkill = owner;
         this.damage = damage;
         this.speed = speed;
         this.target = target;

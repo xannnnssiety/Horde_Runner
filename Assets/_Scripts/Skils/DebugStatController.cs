@@ -60,6 +60,11 @@ public class DebugStatController : MonoBehaviour
             statsManager.AddAmountBonus(amountIncrement);
         }
 
+        if (Input.GetKeyDown(KeyCode.Alpha6))
+        {
+            statsManager.AddProjectileSpeedBonus(percentIncrement);
+        }
+
         // --- Кнопка для сброса всех статов ---
         if (Input.GetKeyDown(KeyCode.R))
         {
