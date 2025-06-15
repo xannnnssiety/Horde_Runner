@@ -441,7 +441,7 @@ GameObject:
   - component: {fileID: 758571143}
   - component: {fileID: 758571142}
   - component: {fileID: 758571141}
-  m_Layer: 8
+  m_Layer: 9
   m_Name: Wall
   m_TagString: WallRunnable
   m_Icon: {fileID: 0}
@@ -2506,12 +2506,21 @@ MonoBehaviour:
   mainCamera: {fileID: 8115795402828880006}
   speedDisplayText: {fileID: 408230506}
   baseMoveSpeed: 25
-  maxMoveSpeed: 400
-  speedChangeRate: 5
+  maxMoveSpeed: 60
+  speedChangeRate: 1
   turnSmoothTime: 0.1
-  jumpHeight: 2
+  jumpHeight: 5
   gravity: -19.62
   coyoteTime: 0.15
+  airControlRate: 10
+  groundFriction: 10
+  wallJumpableLayer:
+    serializedVersion: 2
+    m_Bits: 512
+  wallSlideSpeed: 2
+  wallJumpHeight: 4
+  wallJumpSidewaysForce: 16
+  wallCheckDistance: 2
   grindAccelerationMultiplier: 3
   grindableLayer:
     serializedVersion: 2

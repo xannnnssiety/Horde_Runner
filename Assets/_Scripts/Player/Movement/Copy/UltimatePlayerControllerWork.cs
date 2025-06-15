@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 [RequireComponent(typeof(CharacterController))]
 [RequireComponent(typeof(Animator))]
-public class UltimatePlayerController : MonoBehaviour
+public class UltimatePlayerControllerWork : MonoBehaviour
 {
     // --- оепевхякемхе янярнъмхи ---
     private enum PlayerState
