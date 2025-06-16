@@ -1,5 +1,5 @@
 using UnityEngine;
-using static FreestyleMovementController;
+
 
 // Главный класс-контроллер, который управляет состояниями
 [RequireComponent(typeof(CharacterController))]

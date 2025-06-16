@@ -239,7 +239,7 @@ GameObject:
   - component: {fileID: 408230506}
   - component: {fileID: 408230505}
   m_Layer: 5
-  m_Name: Text (Legacy)
+  m_Name: SpeedText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2004,7 +2004,15 @@ GameObject:
   - component: {fileID: 2903345009518085615}
   - component: {fileID: 3025839436653559384}
   - component: {fileID: 5361586976555951918}
+  - component: {fileID: 5361586976555951925}
+  - component: {fileID: 5361586976555951924}
+  - component: {fileID: 5361586976555951923}
+  - component: {fileID: 5361586976555951922}
+  - component: {fileID: 5361586976555951921}
+  - component: {fileID: 5361586976555951920}
   - component: {fileID: 5361586976555951919}
+  - component: {fileID: 5361586976555951926}
+  - component: {fileID: 5361586976555951927}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -2276,10 +2284,10 @@ MonoBehaviour:
   rotationSpeed: 1
   minYAngle: 10
   maxYAngle: 70
-  initialDistance: 5
+  initialDistance: 10
   minDistance: 1.5
   maxDistance: 10
-  zoomSpeed: 5
+  zoomSpeed: 0
   positionSmoothTime: 0
   rotationSmoothTime: 0
   collisionLayers:
@@ -2500,33 +2508,132 @@ MonoBehaviour:
   m_GameObject: {fileID: 2452716207034665179}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8d1a377ceae28e34aa5b13c72cf160c7, type: 3}
+  m_Script: {fileID: 11500000, guid: 6ff4673b5863b0c47897920a900cf99b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mainCamera: {fileID: 8115795402828880006}
   speedDisplayText: {fileID: 408230506}
-  baseMoveSpeed: 25
-  maxMoveSpeed: 60
-  speedChangeRate: 1
-  turnSmoothTime: 0.1
-  jumpHeight: 5
-  gravity: -19.62
-  coyoteTime: 0.15
-  airControlRate: 10
-  groundFriction: 10
+--- !u!114 &5361586976555951920
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2452716207034665179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e3aeab8151d962e4888c80deb482dd1a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  grindAccelerationMultiplier: 1.5
+  grindableLayer:
+    serializedVersion: 2
+    m_Bits: 128
+  grindSearchRadius: 6
+--- !u!114 &5361586976555951921
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2452716207034665179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10578b4dc050058479ab779cb6331808, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
   wallJumpableLayer:
     serializedVersion: 2
     m_Bits: 512
   wallSlideSpeed: 2
+  wallCheckDistance: 3
   wallJumpHeight: 4
-  wallJumpSidewaysForce: 16
-  wallCheckDistance: 2
-  grindAccelerationMultiplier: 3
-  grindableLayer:
-    serializedVersion: 2
-    m_Bits: 128
-  grindSearchRadius: 3
-  currentState: 0
+  wallJumpSidewaysForce: 8
+--- !u!114 &5361586976555951922
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2452716207034665179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d3b7efcde910ec4fb998197229b3ed7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  airControlRate: 10
+--- !u!114 &5361586976555951923
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2452716207034665179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2034cf097ef73f478ac2ef113e92e63, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  groundFriction: 10
+--- !u!114 &5361586976555951924
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2452716207034665179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 289cee450a5f0574a8a1523fe86dacc3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &5361586976555951925
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2452716207034665179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a2757a4a72255840b4a4c09569358a2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  TurnSmoothVelocity: 0
+  baseMoveSpeed: 15
+  maxMoveSpeed: 60
+  turnSmoothTime: 0.1
+  gravity: -49.62
+  coyoteTime: 0.15
+  jumpHeight: 5
+  speedChangeRate: 2
+  currentStateForInspector: 0
+--- !u!114 &5361586976555951926
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2452716207034665179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9b2676e497129946b51eafd1acefa4e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &5361586976555951927
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2452716207034665179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8144b8ab1cb4ea54dbc6802122196c43, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dashSpeed: 110
+  dashDuration: 0.1
+  dashCooldown: 2
 --- !u!4 &5489043562891154679
 Transform:
   m_ObjectHideFlags: 0
