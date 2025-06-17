@@ -67,7 +67,7 @@ public class PlayerDash : MonoBehaviour
     private void CheckForDashInput()
     {
         // Используем "Fire3" (по умолчанию Left Shift). Можно изменить на свою кнопку в Edit -> Project Settings -> Input Manager
-        if (Input.GetButtonDown("Fire3") && cooldownTimer <= 0)
+        if (Input.GetKeyDown(KeyCode.LeftShift) && cooldownTimer <= 0)
         {
             StartDash();
         }

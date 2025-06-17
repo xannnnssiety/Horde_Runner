@@ -101,6 +101,8 @@ public class PlayerWallMovement : MonoBehaviour
 
             // Переходим в состояние "в воздухе", так как мы только что отпрыгнули
             _controller.SetState(PlayerController.PlayerState.InAir);
+            
+
 
             // В будущем здесь нужно будет вызвать триггер анимации прыжка
             // _controller.Animator.SetTrigger("WallJump");

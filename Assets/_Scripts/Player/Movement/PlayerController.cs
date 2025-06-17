@@ -11,6 +11,7 @@ using System;
 [RequireComponent(typeof(PlayerAnimation))]
 [RequireComponent(typeof(PlayerInput))]
 [RequireComponent(typeof(PlayerDash))]
+[RequireComponent(typeof(PlayerSlide))]
 public class PlayerController : MonoBehaviour
 {
     public enum PlayerState
@@ -18,7 +19,8 @@ public class PlayerController : MonoBehaviour
         Grounded,
         InAir,
         Grinding,
-        WallSliding
+        WallSliding,
+        Sliding
     }
 
     // --- ОБЩЕДОСТУПНЫЕ СВОЙСТВА (API для модулей) ---
@@ -27,8 +29,9 @@ public class PlayerController : MonoBehaviour
     public PlayerState CurrentState { get; private set; }
     public float CurrentMoveSpeed { get; set; }
     public bool IsGrounded { get; private set; }
-    public bool IsWallSliding { get; set; } // Модуль стены будет управлять этим флагом
     public float GravityValue => gravity;
+    public bool IsWallSliding { get; set; } // Модуль стены будет управлять этим флагом
+    
     public float TurnSmoothVelocity; // Переменная для SmoothDampAngle
     public event Action OnJump;
     public event Action OnWallJump;
@@ -46,21 +49,26 @@ public class PlayerController : MonoBehaviour
     private PlayerGrind _grindModule;
     private PlayerAnimation _animationModule;
     private PlayerDash _dashModule;
+    private PlayerSlide _slideModule;
 
 
     [Header("Глобальные настройки")]
     public float baseMoveSpeed = 5f;
     public float maxMoveSpeed = 10f;
     public float turnSmoothTime = 0.1f;
-    public float gravity = -19.62f;
+    
     public float coyoteTime = 0.15f;
     public float jumpHeight = 2f; 
-    public float speedChangeRate = 2f; 
+    public float speedChangeRate = 2f;
+
+    public float gravity = -41.62f;
+    
 
     [Header("Отладка")]
     [SerializeField] private PlayerState currentStateForInspector;
 
     private float coyoteTimeCounter;
+    private bool wantsToSlide = false;
 
     private void Awake()
     {
@@ -76,16 +84,19 @@ public class PlayerController : MonoBehaviour
         _grindModule = GetComponent<PlayerGrind>();
         _animationModule = GetComponent<PlayerAnimation>();
         _dashModule = GetComponent<PlayerDash>();
+        _slideModule = GetComponent<PlayerSlide>();
     }
 
     private void Start()
     {
+        
+
         if (MainCamera == null && Camera.main != null) MainCamera = Camera.main;
         else if (MainCamera == null) Debug.LogError("Камера не найдена и не назначена!");
 
         CurrentMoveSpeed = baseMoveSpeed;
         SetState(CharacterController.isGrounded ? PlayerState.Grounded : PlayerState.InAir);
-
+        
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
@@ -95,8 +106,10 @@ public class PlayerController : MonoBehaviour
         _inputModule.TickUpdate(); // Сначала обновляем ввод
         HandleGroundedCheck();    // Затем проверяем состояние земли
         _dashModule.TickUpdate();
+        _slideModule.TickUpdate();
 
-        if (_dashModule.IsDashing)
+
+        if (_dashModule.IsDashing || _slideModule.IsSliding)
         {
             // Мы все еще применяем движение в конце кадра, поэтому дэш будет работать
         }
@@ -119,15 +132,18 @@ public class PlayerController : MonoBehaviour
                 case PlayerState.WallSliding:
                     _wallMovementModule.TickUpdate(); // Модуль стены сам обработает прыжок и падение
                     break;
+                case PlayerState.Sliding: 
+                    _slideModule.TickUpdate();
+                    break;
             }
         }
 
-
+        ApplyGravity();
         // Применяем гравитацию, если это необходимо
-        if (CurrentState != PlayerState.Grinding && !IsWallSliding && !_dashModule.IsDashing)
+/*        if (CurrentState != PlayerState.Grinding && !IsWallSliding && !_dashModule.IsDashing)
         {
             ApplyGravity();
-        }
+        }*/
 
         // Финальный шаг: применяем движение
         CharacterController.Move(PlayerVelocity * Time.deltaTime);
@@ -168,8 +184,18 @@ public class PlayerController : MonoBehaviour
 
     private void ApplyGravity()
     {
+        // Если активен дэш или грайнд/скольжение по стене, гравитация не нужна
+        if (_dashModule.IsDashing || CurrentState == PlayerState.Grinding || IsWallSliding)
+        {
+            return; // Выходим из метода
+        }
+
+        // Получаем текущее значение гравитации из модуля слайда.
+        // Если мы не "пикируем", он вернет стандартное значение.
+        float currentGravity = _slideModule.GetCurrentGravity();
+
         var velocity = PlayerVelocity;
-        velocity.y += gravity * Time.deltaTime;
+        velocity.y += currentGravity * Time.deltaTime;
         PlayerVelocity = velocity;
     }
 

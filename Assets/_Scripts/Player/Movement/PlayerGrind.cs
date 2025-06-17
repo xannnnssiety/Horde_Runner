@@ -60,6 +60,8 @@ public class PlayerGrind : MonoBehaviour
         HandleRailSwitching();
         HandleMovementOnRail();
         HandleGrindJump();
+
+
     }
 
     private void HandleSpeed()
@@ -160,6 +162,7 @@ public class PlayerGrind : MonoBehaviour
 
         currentGrindRail = null;
         _controller.SetState(PlayerController.PlayerState.InAir);
+        
         grindCooldownTimer = GRIND_COOLDOWN;
     }
 
