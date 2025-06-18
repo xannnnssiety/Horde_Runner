@@ -12,6 +12,7 @@ using System;
 [RequireComponent(typeof(PlayerInput))]
 [RequireComponent(typeof(PlayerDash))]
 [RequireComponent(typeof(PlayerSlide))]
+[RequireComponent(typeof(PlayerWallRun))]
 public class PlayerController : MonoBehaviour
 {
     public enum PlayerState
@@ -20,7 +21,8 @@ public class PlayerController : MonoBehaviour
         InAir,
         Grinding,
         WallSliding,
-        Sliding
+        Sliding,
+        WallRunning
     }
 
     // --- ОБЩЕДОСТУПНЫЕ СВОЙСТВА (API для модулей) ---
@@ -50,6 +52,7 @@ public class PlayerController : MonoBehaviour
     private PlayerAnimation _animationModule;
     private PlayerDash _dashModule;
     private PlayerSlide _slideModule;
+    private PlayerWallRun _wallRunModule;
 
 
     [Header("Глобальные настройки")]
@@ -85,6 +88,7 @@ public class PlayerController : MonoBehaviour
         _animationModule = GetComponent<PlayerAnimation>();
         _dashModule = GetComponent<PlayerDash>();
         _slideModule = GetComponent<PlayerSlide>();
+        _wallRunModule = GetComponent<PlayerWallRun>();
     }
 
     private void Start()
@@ -109,9 +113,13 @@ public class PlayerController : MonoBehaviour
         _slideModule.TickUpdate();
 
 
-        if (_dashModule.IsDashing || _slideModule.IsSliding)
+        if (_dashModule.IsDashing || _slideModule.IsSliding || _wallRunModule.IsWallRunning)
         {
             // Мы все еще применяем движение в конце кадра, поэтому дэш будет работать
+            if (_wallRunModule.IsWallRunning)
+            {
+                _wallRunModule.TickUpdate();
+            }
         }
         else
         {
@@ -124,7 +132,9 @@ public class PlayerController : MonoBehaviour
                 case PlayerState.InAir:
                     _airborneMovementModule.TickUpdate();
                     _wallMovementModule.TickUpdate();
+                    _wallRunModule.TickUpdate();
                     _grindModule.CheckForGrindStart();
+                    
                     break;
                 case PlayerState.Grinding:
                     _grindModule.TickUpdate();
@@ -139,11 +149,6 @@ public class PlayerController : MonoBehaviour
         }
 
         ApplyGravity();
-        // Применяем гравитацию, если это необходимо
-/*        if (CurrentState != PlayerState.Grinding && !IsWallSliding && !_dashModule.IsDashing)
-        {
-            ApplyGravity();
-        }*/
 
         // Финальный шаг: применяем движение
         CharacterController.Move(PlayerVelocity * Time.deltaTime);
@@ -185,7 +190,7 @@ public class PlayerController : MonoBehaviour
     private void ApplyGravity()
     {
         // Если активен дэш или грайнд/скольжение по стене, гравитация не нужна
-        if (_dashModule.IsDashing || CurrentState == PlayerState.Grinding || IsWallSliding)
+        if (_dashModule.IsDashing || CurrentState == PlayerState.Grinding || IsWallSliding || _wallRunModule.IsWallRunning)
         {
             return; // Выходим из метода
         }

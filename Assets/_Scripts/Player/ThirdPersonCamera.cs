@@ -25,13 +25,22 @@ public class ThirdPersonCamera : MonoBehaviour
     public LayerMask collisionLayers; // Layer mask for collision detection
     public float collisionOffset = 0.2f; // Offset to prevent camera from clipping through objects
 
+    [Header("Wall Run Settings")]
+    [Tooltip("”гол наклона камеры при беге по стене")]
+    public float wallRunTiltAngle = 15f;
+    [Tooltip("—корость наклона камеры")]
+    public float tiltSmoothTime = 0.2f;
+
     private float currentX = 0f; // Current horizontal angle
     private float currentY = 0f; // Current vertical angle
     private float currentDistance; // Current distance from the target
     private Vector3 currentPositionVelocity; // Velocity for position smoothing
     private Quaternion currentRotation; // Current rotation of the camera
     private Quaternion targetRotation; // Target rotation of the camera
+    private float currentTilt;
+    private float tiltVelocity;
 
+    private PlayerWallRun playerWallRun;
 
     void Start()
     {
@@ -40,6 +49,15 @@ public class ThirdPersonCamera : MonoBehaviour
             Debug.LogError("Target not set for ThirdPersonCamera. Please assign a target in the inspector.");
             enabled = false;
             return;
+        }
+
+        if (target != null)
+        {
+            playerWallRun = target.GetComponent<PlayerWallRun>();
+            if (playerWallRun == null)
+            {
+                Debug.LogWarning(" амера не нашла компонент PlayerWallRun на цели!", this);
+            }
         }
 
         currentDistance = initialDistance;
@@ -86,9 +104,17 @@ public class ThirdPersonCamera : MonoBehaviour
         // “очка, вокруг которой вращаетс€ камера и на которую она смотрит (с учетом offset)
         Vector3 targetFocusPoint = target.position + offset;
 
+        
+        
         // –ассчитываем желаемый поворот и позицию
         Quaternion desiredRotation = Quaternion.Euler(currentY, currentX, 0);
-        Vector3 desiredPosition = targetFocusPoint - (desiredRotation * Vector3.forward * currentDistance);
+
+        HandleTilt();
+
+        Quaternion tiltRotation = Quaternion.Euler(0, 0, currentTilt);
+        Quaternion finalRotation = desiredRotation * tiltRotation;
+
+        Vector3 desiredPosition = targetFocusPoint - (finalRotation * Vector3.forward * currentDistance);
 
         // ќбработка столкновений
         RaycastHit hit;
@@ -106,6 +132,27 @@ public class ThirdPersonCamera : MonoBehaviour
         // »спользуем Quaternion.LookRotation дл€ более стабильного LookAt
         targetRotation = Quaternion.LookRotation(targetFocusPoint - transform.position);
         transform.rotation = SmoothQuaternion(transform.rotation, targetRotation, rotationSmoothTime);
+    }
+
+
+    void HandleTilt()
+    {
+        float targetTilt = 0f;
+
+        // ≈сли игрок бежит по стене
+        if (playerWallRun != null && playerWallRun.IsWallRunning)
+        {
+            // ќпредел€ем, с какой стороны стена, чтобы наклонить камеру в нужную сторону
+            Vector3 wallNormal = playerWallRun.WallNormal;
+            // ќпредел€ем, слева или справа стена относительно камеры
+            float dot = Vector3.Dot(wallNormal, transform.right);
+
+            // ≈сли стена справа (dot > 0), наклон отрицательный. ≈сли слева - положительный.
+            targetTilt = -dot * wallRunTiltAngle;
+        }
+
+        // ѕлавно измен€ем текущий наклон к целевому
+        currentTilt = Mathf.SmoothDamp(currentTilt, targetTilt, ref tiltVelocity, tiltSmoothTime);
     }
 
 
