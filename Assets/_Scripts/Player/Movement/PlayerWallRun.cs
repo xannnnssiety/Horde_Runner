@@ -11,6 +11,8 @@ public class PlayerWallRun : MonoBehaviour
     [Header("Проверка угла для бега")]
     [Range(1f, 90f)]
     public float maxAngleForWallRun = 45f;
+    [Tooltip("Угол наклона самого персонажа во время бега по стене")]
+    public float playerTiltAngle = 15f;
 
     // Публичные свойства
     public bool IsWallRunning { get; private set; }
@@ -22,6 +24,7 @@ public class PlayerWallRun : MonoBehaviour
     // Внутренние переменные
     private Vector3 wallRunDirection;
     private float wallJumpCooldownTimer; // Таймер "иммунитета" после прыжка
+    private Coroutine resetTiltCoroutine;
 
     private void Awake()
     {
@@ -94,6 +97,12 @@ public class PlayerWallRun : MonoBehaviour
 
     private void StartWallRun(RaycastHit hit)
     {
+        if (resetTiltCoroutine != null)
+        {
+            StopCoroutine(resetTiltCoroutine);
+            resetTiltCoroutine = null;
+        }
+
         IsWallRunning = true;
         _controller.SetState(PlayerController.PlayerState.WallRunning);
 
@@ -122,8 +131,23 @@ public class PlayerWallRun : MonoBehaviour
         _controller.PlayerVelocity = new Vector3(_controller.PlayerVelocity.x, 0, _controller.PlayerVelocity.z); // Принудительное обнуление Y
 
         // --- ПОВОРОТ ---
-        Quaternion targetRotation = Quaternion.LookRotation(wallRunDirection);
+        Quaternion lookRotation = Quaternion.LookRotation(wallRunDirection);
+
+        // 2. Определяем наклон
+        // Узнаем, справа или слева стена, чтобы наклониться в нужную сторону
+        bool isWallOnRight = Vector3.Dot(WallNormal, transform.right) > 0;
+        float tiltAngle = isWallOnRight ? -playerTiltAngle : playerTiltAngle;  // Наклон в градусах. Можно вынести в настройки.
+
+        // 3. Создаем кватернион для наклона
+        Quaternion tilt = Quaternion.Euler(0, 0, tiltAngle);
+
+        // 4. Комбинируем поворот и наклон
+        Quaternion targetRotation = lookRotation * tilt;
+
+        // 5. Плавно применяем финальный поворот
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
+
+
     }
 
     private void HandleWallJump()
@@ -152,11 +176,41 @@ public class PlayerWallRun : MonoBehaviour
 
     private void StopWallRun()
     {
+        if (!IsWallRunning) return;
         IsWallRunning = false;
+
+        if (resetTiltCoroutine == null)
+        {
+            resetTiltCoroutine = StartCoroutine(ResetTilt());
+        }
+
         // Переходим в состояние полета, только если мы не на земле
         if (!_controller.IsGrounded && _controller.CurrentState == PlayerController.PlayerState.WallRunning)
         {
             _controller.SetState(PlayerController.PlayerState.InAir);
         }
     }
+
+    private System.Collections.IEnumerator ResetTilt()
+    {
+        Quaternion currentRotation = transform.rotation;
+        // Целевой поворот - это текущий поворот по Y, но с нулевым наклоном по X и Z
+        Quaternion targetRotation = Quaternion.Euler(0, currentRotation.eulerAngles.y, 0);
+
+        float timer = 0f;
+        float duration = 0.25f; // Как быстро выпрямиться
+
+        while (timer < duration)
+        {
+            // Плавно интерполируем к вертикальному положению
+            transform.rotation = Quaternion.Slerp(currentRotation, targetRotation, timer / duration);
+            timer += Time.deltaTime;
+            yield return null; // Ждем следующего кадра
+        }
+
+        // Гарантируем точное финальное положение
+        transform.rotation = targetRotation;
+        resetTiltCoroutine = null; // Сбрасываем ссылку на корутину
+    }
+
 }

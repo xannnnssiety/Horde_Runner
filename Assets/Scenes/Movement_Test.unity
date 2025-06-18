@@ -2404,7 +2404,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   collisionOffset: 0.2
-  wallRunTiltAngle: 45
+  wallRunTiltAngle: 30
   tiltSmoothTime: 0.2
 --- !u!4 &4535043867353222294
 Transform:
@@ -2780,6 +2780,7 @@ MonoBehaviour:
   wallAttractionForce: 20
   wallJumpSideForce: 6
   maxAngleForWallRun: 45
+  playerTiltAngle: 30
 --- !u!4 &5489043562891154679
 Transform:
   m_ObjectHideFlags: 0

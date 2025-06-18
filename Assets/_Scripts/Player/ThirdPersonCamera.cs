@@ -101,37 +101,42 @@ public class ThirdPersonCamera : MonoBehaviour
 
     void CalculateCameraTransform()
     {
-        // Точка, вокруг которой вращается камера и на которую она смотрит (с учетом offset)
+        // 1. Определяем точку, на которую смотрим
         Vector3 targetFocusPoint = target.position + offset;
 
-        
-        
-        // Рассчитываем желаемый поворот и позицию
-        Quaternion desiredRotation = Quaternion.Euler(currentY, currentX, 0);
+        // 2. Рассчитываем желаемую позицию БЕЗ учета наклона (пока что)
+        Quaternion desiredRotationWithoutTilt = Quaternion.Euler(currentY, currentX, 0);
+        Vector3 desiredPosition = targetFocusPoint - (desiredRotationWithoutTilt * Vector3.forward * currentDistance);
 
-        HandleTilt();
-
-        Quaternion tiltRotation = Quaternion.Euler(0, 0, currentTilt);
-        Quaternion finalRotation = desiredRotation * tiltRotation;
-
-        Vector3 desiredPosition = targetFocusPoint - (finalRotation * Vector3.forward * currentDistance);
-
-        // Обработка столкновений
+        // 3. Обработка столкновений (остается без изменений)
         RaycastHit hit;
         Vector3 directionToCamera = desiredPosition - targetFocusPoint;
         if (Physics.Raycast(targetFocusPoint, directionToCamera.normalized, out hit, directionToCamera.magnitude, collisionLayers))
         {
-            // Если луч попал в препятствие, перемещаем камеру ближе к препятствию
             desiredPosition = hit.point + hit.normal * collisionOffset;
         }
 
-        // Плавное перемещение позиции камеры
+        // 4. Плавное перемещение позиции камеры (остается без изменений)
         transform.position = Vector3.SmoothDamp(transform.position, desiredPosition, ref currentPositionVelocity, positionSmoothTime);
 
-        // Плавное вращение камеры (чтобы смотрела на цель)
-        // Используем Quaternion.LookRotation для более стабильного LookAt
-        targetRotation = Quaternion.LookRotation(targetFocusPoint - transform.position);
-        transform.rotation = SmoothQuaternion(transform.rotation, targetRotation, rotationSmoothTime);
+        // --- ОБНОВЛЕННАЯ ЛОГИКА ПОВОРОТА И НАКЛОНА ---
+
+        // 5. Сначала вычисляем базовый поворот, заставляющий камеру смотреть на цель
+        Quaternion lookAtTargetRotation = Quaternion.LookRotation(targetFocusPoint - transform.position);
+
+        // 6. Вычисляем наш целевой наклон (как и раньше)
+        HandleTilt();
+
+        // 7. Создаем кватернион только для наклона
+        Quaternion tiltRotation = Quaternion.Euler(0, 0, currentTilt);
+
+        // 8. КОМБИНИРУЕМ! Мы берем поворот "взгляда на цель" и добавляем к нему наклон.
+        // Это финальная, правильная ротация.
+        Quaternion finalRotation = lookAtTargetRotation * tiltRotation;
+
+        // 9. Применяем финальный поворот к камере. Убираем старую функцию SmoothQuaternion.
+        // Quaternion.Slerp здесь подходит лучше для предсказуемого результата.
+        transform.rotation = Quaternion.Slerp(transform.rotation, finalRotation, Time.deltaTime / Mathf.Max(0.001f, rotationSmoothTime));
     }
 
 
@@ -139,19 +144,36 @@ public class ThirdPersonCamera : MonoBehaviour
     {
         float targetTilt = 0f;
 
-        // Если игрок бежит по стене
+        // Проверяем, есть ли ссылка на модуль и активен ли бег
         if (playerWallRun != null && playerWallRun.IsWallRunning)
         {
-            // Определяем, с какой стороны стена, чтобы наклонить камеру в нужную сторону
-            Vector3 wallNormal = playerWallRun.WallNormal;
-            // Определяем, слева или справа стена относительно камеры
-            float dot = Vector3.Dot(wallNormal, transform.right);
+            // Если мы зашли сюда, значит, камера ЗНАЕТ о беге по стене.
+            // Вы увидите это сообщение в консоли Unity.
+            Debug.Log("Wall Running Detected by Camera!");
 
-            // Если стена справа (dot > 0), наклон отрицательный. Если слева - положительный.
-            targetTilt = -dot * wallRunTiltAngle;
+            Vector3 wallNormal = playerWallRun.WallNormal;
+
+            // Эта логика может быть ненадежной, если камера сильно вращается.
+            // float dot = Vector3.Dot(wallNormal, transform.right); 
+            // targetTilt = -dot * wallRunTiltAngle;
+
+            // --- БОЛЕЕ НАДЕЖНЫЙ СПОСОБ ---
+            // Узнаем, с какой стороны от игрока стена
+            Vector3 playerRight = playerWallRun.transform.right;
+            float dot = Vector3.Dot(wallNormal, playerRight);
+
+            // Если dot < 0, стена слева (нормаль указывает вправо). Наклон положительный.
+            // Если dot > 0, стена справа (нормаль указывает влево). Наклон отрицательный.
+            if (dot < 0) // Стена слева
+            {
+                targetTilt = wallRunTiltAngle;
+            }
+            else // Стена справа
+            {
+                targetTilt = -wallRunTiltAngle;
+            }
         }
 
-        // Плавно изменяем текущий наклон к целевому
         currentTilt = Mathf.SmoothDamp(currentTilt, targetTilt, ref tiltVelocity, tiltSmoothTime);
     }
 
