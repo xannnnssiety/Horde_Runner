@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 [RequireComponent(typeof(PlayerController))]
 public class PlayerWallMovement : MonoBehaviour
@@ -32,6 +33,7 @@ public class PlayerWallMovement : MonoBehaviour
     // Приватные переменные состояния
     private Vector3 wallNormal;
     private float wallSlideTimer;
+    public event Action OnJump;
 
     private void Awake()
     {
@@ -91,6 +93,7 @@ public class PlayerWallMovement : MonoBehaviour
         // Обработка прыжка от стены (логика из старого скрипта)
         if (Input.GetButtonDown("Jump"))
         {
+            
             // Прекращаем скольжение
             _controller.IsWallSliding = false;
 
@@ -109,6 +112,7 @@ public class PlayerWallMovement : MonoBehaviour
 
             // Переходим в состояние "в воздухе", так как мы только что отпрыгнули
             _controller.SetState(PlayerController.PlayerState.InAir);
+            OnJump?.Invoke();
             ResetAndStopSliding();
         }
     }

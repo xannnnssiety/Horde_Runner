@@ -8,7 +8,7 @@ using System;
 [RequireComponent(typeof(PlayerAirborneMovement))]
 [RequireComponent(typeof(PlayerWallMovement))]
 [RequireComponent(typeof(PlayerGrind))]
-[RequireComponent(typeof(PlayerAnimation))]
+
 [RequireComponent(typeof(PlayerInput))]
 [RequireComponent(typeof(PlayerDash))]
 [RequireComponent(typeof(PlayerSlide))]
@@ -49,7 +49,7 @@ public class PlayerController : MonoBehaviour
     private PlayerAirborneMovement _airborneMovementModule;
     private PlayerWallMovement _wallMovementModule;
     private PlayerGrind _grindModule;
-    private PlayerAnimation _animationModule;
+    
     private PlayerDash _dashModule;
     private PlayerSlide _slideModule;
     private PlayerWallRun _wallRunModule;
@@ -85,7 +85,7 @@ public class PlayerController : MonoBehaviour
         _airborneMovementModule = GetComponent<PlayerAirborneMovement>();
         _wallMovementModule = GetComponent<PlayerWallMovement>();
         _grindModule = GetComponent<PlayerGrind>();
-        _animationModule = GetComponent<PlayerAnimation>();
+        
         _dashModule = GetComponent<PlayerDash>();
         _slideModule = GetComponent<PlayerSlide>();
         _wallRunModule = GetComponent<PlayerWallRun>();
@@ -154,7 +154,7 @@ public class PlayerController : MonoBehaviour
         CharacterController.Move(PlayerVelocity * Time.deltaTime);
 
         // Обновляем анимации и UI в самом конце
-        _animationModule.TickUpdate();
+        
         
     }
 

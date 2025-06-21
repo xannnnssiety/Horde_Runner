@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Linq;
+using System;
 
 [RequireComponent(typeof(PlayerController))]
 public class PlayerGrind : MonoBehaviour
@@ -19,7 +20,7 @@ public class PlayerGrind : MonoBehaviour
     private Vector3 grindDirection;
     private float grindCooldownTimer;
     private const float GRIND_COOLDOWN = 0.2f;
-
+    public event Action OnJump;
     private void Awake()
     {
         _controller = GetComponent<PlayerController>();
@@ -124,7 +125,9 @@ public class PlayerGrind : MonoBehaviour
     {
         if (Input.GetButtonDown("Jump"))
         {
+            OnJump?.Invoke();
             EndGrind(true);
+
         }
     }
 

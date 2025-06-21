@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 [RequireComponent(typeof(PlayerController))]
 public class PlayerWallRun : MonoBehaviour
@@ -17,7 +18,7 @@ public class PlayerWallRun : MonoBehaviour
     // Публичные свойства
     public bool IsWallRunning { get; private set; }
     public Vector3 WallNormal { get; private set; }
-
+    public event Action OnJump;
     // Ссылки
     private PlayerController _controller;
 
@@ -119,6 +120,7 @@ public class PlayerWallRun : MonoBehaviour
         // --- ПРЫЖОК ---
         if (Input.GetButtonDown("Jump"))
         {
+            
             HandleWallJump();
             return;
         }
@@ -160,6 +162,8 @@ public class PlayerWallRun : MonoBehaviour
         Vector3 sidewaysForce = WallNormal * wallJumpSideForce;
         float verticalVelocity = Mathf.Sqrt(_controller.jumpHeight * -2f * _controller.GravityValue);
         _controller.PlayerVelocity = new Vector3(sidewaysForce.x, verticalVelocity, sidewaysForce.z);
+
+        OnJump?.Invoke();
 
         // 3. Запускаем таймер "иммунитета" на очень короткое время
         wallJumpCooldownTimer = 0.2f; // В течение 0.2с на игрока не будут действовать другие силы из этого скрипта

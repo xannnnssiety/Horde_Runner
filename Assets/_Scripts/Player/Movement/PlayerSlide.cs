@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 
 [RequireComponent(typeof(PlayerController))]
@@ -13,6 +14,7 @@ public class PlayerSlide : MonoBehaviour
     public float slideCooldown = 1f;
     [Tooltip("Усиленная гравитация при активации в воздухе (чтобы быстрее упасть)")]
     public float diveGravity = -200f;
+    public event Action OnJump;
 
     // Публичное свойство, чтобы контроллер и другие модули знали о нашем состоянии
     public bool IsSliding { get; private set; }
@@ -86,46 +88,48 @@ private void UpdateSlideState()
 
         // Если мы в состоянии скольжения на земле
         if (IsSliding)
-    {
+        {
         // --- НОВАЯ ПРОВЕРКА НА ПРЫЖОК ---
-        if (Input.GetButtonDown("Jump"))
-        {
-            // Получаем высоту прыжка из контроллера
-            float jumpHeight = _controller.jumpHeight;
+            if (Input.GetButtonDown("Jump"))
+            {
             
-            // Рассчитываем вертикальную скорость прыжка
-            float jumpVelocityY = Mathf.Sqrt(jumpHeight * -2f * _controller.GravityValue);
+                // Получаем высоту прыжка из контроллера
+                float jumpHeight = _controller.jumpHeight;
+            
+                // Рассчитываем вертикальную скорость прыжка
+                float jumpVelocityY = Mathf.Sqrt(jumpHeight * -2f * _controller.GravityValue);
 
-            // Получаем текущую горизонтальную скорость слайда
-            Vector3 currentHorizontalVelocity = new Vector3(_controller.PlayerVelocity.x, 0, _controller.PlayerVelocity.z);
+                // Получаем текущую горизонтальную скорость слайда
+                Vector3 currentHorizontalVelocity = new Vector3(_controller.PlayerVelocity.x, 0, _controller.PlayerVelocity.z);
             
-            // Комбинируем горизонтальную скорость от слайда с вертикальной от прыжка
-            _controller.PlayerVelocity = currentHorizontalVelocity + Vector3.up * jumpVelocityY;
+                // Комбинируем горизонтальную скорость от слайда с вертикальной от прыжка
+                _controller.PlayerVelocity = currentHorizontalVelocity + Vector3.up * jumpVelocityY;
             
-            // Немедленно заканчиваем слайд
-            EndSlide();
+                // Немедленно заканчиваем слайд
+                EndSlide();
             
-            // Сообщаем контроллеру, что мы теперь в воздухе
-            _controller.SetState(PlayerController.PlayerState.InAir);
-            
-            // Запускаем анимацию прыжка
-            _controller.Animator.SetTrigger("Jump"); // Предполагается, что у вас есть триггер Jump
+                // Сообщаем контроллеру, что мы теперь в воздухе
+                _controller.SetState(PlayerController.PlayerState.InAir);
 
-            return; // Выходим из метода, чтобы не обрабатывать остальную логику слайда
-        }
+                OnJump?.Invoke();
+                
+                
 
-        slideTimer -= Time.deltaTime;
+                return; // Выходим из метода, чтобы не обрабатывать остальную логику слайда
+            }
+
+            slideTimer -= Time.deltaTime;
         
-        if (slideTimer <= 0)
-        {
-            EndSlide();
+            if (slideTimer <= 0)
+            {
+                EndSlide();
+            }
+            else
+            {
+                Vector3 slideVelocity = transform.forward * slideSpeed;
+                _controller.PlayerVelocity = new Vector3(slideVelocity.x, _controller.PlayerVelocity.y, slideVelocity.z);
+            }
         }
-        else
-        {
-            Vector3 slideVelocity = transform.forward * slideSpeed;
-            _controller.PlayerVelocity = new Vector3(slideVelocity.x, _controller.PlayerVelocity.y, slideVelocity.z);
-        }
-    }
 }
 
     private void BeginGroundSlide()

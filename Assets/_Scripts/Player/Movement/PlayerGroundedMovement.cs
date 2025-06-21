@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 [RequireComponent(typeof(PlayerController))]
 public class PlayerGroundedMovement : MonoBehaviour
@@ -14,6 +15,7 @@ public class PlayerGroundedMovement : MonoBehaviour
     // Ссылка на главный контроллер для доступа к общим данным
     private PlayerController _controller;
     private CharacterController _characterController; // Кэшируем для удобства
+    public event Action OnJump;
 
     private void Awake()
     {
@@ -84,9 +86,11 @@ public class PlayerGroundedMovement : MonoBehaviour
 
     private void HandleJump()
     {
+        
         // Проверяем, нажата ли кнопка прыжка и доступно ли "время койота"
         if (Input.GetButtonDown("Jump") && _controller.CanUseCoyoteTime())
         {
+            
             // Сбрасываем таймер койота, чтобы нельзя было прыгнуть дважды
             _controller.ConsumeCoyoteTime();
 
@@ -98,9 +102,10 @@ public class PlayerGroundedMovement : MonoBehaviour
 
             // Записываем измененную скорость обратно в контроллер
             _controller.PlayerVelocity = velocity;
-
+            
             // Сообщаем контроллеру, что нужно сменить состояние на "в воздухе"
             _controller.SetState(PlayerController.PlayerState.InAir);
+            OnJump?.Invoke();
         }
     }
 

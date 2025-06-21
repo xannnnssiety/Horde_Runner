@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 [RequireComponent(typeof(PlayerController))]
 public class PlayerDash : MonoBehaviour
@@ -16,6 +17,7 @@ public class PlayerDash : MonoBehaviour
 
     // Ссылки
     private PlayerController _controller;
+    public event Action OnDash;
 
     // Внутренние таймеры
     private float cooldownTimer;
@@ -69,6 +71,7 @@ public class PlayerDash : MonoBehaviour
         // Используем "Fire3" (по умолчанию Left Shift). Можно изменить на свою кнопку в Edit -> Project Settings -> Input Manager
         if (Input.GetKeyDown(KeyCode.LeftShift) && cooldownTimer <= 0)
         {
+            OnDash?.Invoke();
             StartDash();
         }
     }
