@@ -84,7 +84,7 @@ public class PlayerGroundedMovement : MonoBehaviour
         _controller.PlayerVelocity = currentVelocity;
     }
 
-    private void HandleJump()
+    public void HandleJump()
     {
         
         // Проверяем, нажата ли кнопка прыжка и доступно ли "время койота"

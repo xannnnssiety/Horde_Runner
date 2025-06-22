@@ -32,6 +32,8 @@ public class PlayerAnimationController : MonoBehaviour
     private static readonly int IsWallOnRight = Animator.StringToHash("IsWallOnRight");
     private static readonly int JumpTrigger = Animator.StringToHash("Jump");
     private static readonly int LandTrigger = Animator.StringToHash("Land");
+    private static readonly int LandFlairTrigger = Animator.StringToHash("LandFlair"); 
+    private static readonly int FlairIndex = Animator.StringToHash("FlairIndex");
 
     // --- МЕТОДЫ ЖИЗНЕННОГО ЦИКЛА UNITY ---
 
@@ -117,44 +119,102 @@ public class PlayerAnimationController : MonoBehaviour
     private void UpdateAllParameters()
     {
         // --- ОБНОВЛЕНИЕ FLOAT ПАРАМЕТРОВ ---
+        // Вычисляем горизонтальную скорость для анимаций бега/ходьбы
         var horizontalVelocity = new Vector3(playerController.PlayerVelocity.x, 0, playerController.PlayerVelocity.z);
-        animator.SetFloat(Speed, horizontalVelocity.magnitude, 0.1f, Time.deltaTime); // Добавляем сглаживание
+        animator.SetFloat(Speed, horizontalVelocity.magnitude, 0.1f, Time.deltaTime);
 
+        // Вычисляем вертикальную скорость для анимаций прыжка/падения,
+        // считая, что на земле она равна нулю для аниматора.
         float verticalSpeedForAnimator = playerController.IsGrounded ? 0f : playerController.PlayerVelocity.y;
-        animator.SetFloat(VerticalSpeed, verticalSpeedForAnimator, 0.1f, Time.deltaTime); // И здесь
+        animator.SetFloat(VerticalSpeed, verticalSpeedForAnimator, 0.1f, Time.deltaTime);
 
-        // --- ОБНОВЛЕНИЕ BOOL ПАРАМЕТРОВ ---
-        animator.SetBool(IsGrounded, playerController.IsGrounded);
-        animator.SetBool(IsWallSliding, playerController.IsWallSliding);
+        // --- ОБНОВЛЕНИЕ BOOL ПАРАМЕТРОВ С ПРИОРИТЕТАМИ ---
 
-        // Проверяем ссылки перед использованием, чтобы избежать NullReferenceException
-        if (playerWallRun != null) animator.SetBool(IsWallRunning, playerWallRun.IsWallRunning);
-        if (playerSlide != null) animator.SetBool(IsSliding, playerSlide.IsSliding);
-        if (playerDash != null) animator.SetBool(IsDashing, playerDash.IsDashing);
+        // 1. Сначала получаем "сырые" данные о текущих активных состояниях из модулей.
+        bool isGrinding = playerController.CurrentState == PlayerController.PlayerState.Grinding;
+        bool isWallRunning = playerWallRun != null && playerWallRun.IsWallRunning;
+        bool isWallSliding = playerController.IsWallSliding;
+        bool isSliding = playerSlide != null && playerSlide.IsSliding;
+        bool isDashing = playerDash != null && playerDash.IsDashing;
 
-        animator.SetBool(IsGrinding, playerController.CurrentState == PlayerController.PlayerState.Grinding);
+        // 2. Устанавливаем флаги для всех "особых" состояний в аниматор.
+        animator.SetBool(IsGrinding, isGrinding);
+        animator.SetBool(IsWallRunning, isWallRunning);
+        animator.SetBool(IsWallSliding, isWallSliding);
+        animator.SetBool(IsSliding, isSliding);
+        animator.SetBool(IsDashing, isDashing);
 
-        if (playerWallRun != null && playerWallRun.IsWallRunning)
+        // 3. Теперь вычисляем и устанавливаем флаг IsGrounded с учетом приоритетов.
+        // Персонаж считается "на земле" для аниматора, только если он физически на земле
+        // И при этом НЕ выполняет грайнд или подкат (которые тоже могут касаться земли).
+        bool isGroundedForAnimator = playerController.IsGrounded && !isGrinding && !isSliding;
+        animator.SetBool(IsGrounded, isGroundedForAnimator);
+
+        // 4. Обрабатываем специфичную логику для бега по стене (определение стороны).
+        if (isWallRunning)
         {
+            // Скалярное произведение определяет, с какой стороны от персонажа находится нормаль стены.
             float dot = Vector3.Dot(transform.right, playerWallRun.WallNormal);
+            // Нормаль "смотрит" из стены. Если она справа от нас, dot будет положительным.
+            // Если мы хотим, чтобы IsWallOnRight было true, когда стена справа, условие должно быть `dot > 0`.
+            // Если анимация бега по правой стене "зеркальная" (персонаж наклоняется влево), то может понадобиться `dot < 0`.
+            // Оставим `dot < 0` как в прошлый раз.
             animator.SetBool(IsWallOnRight, dot < 0);
         }
 
-        // --- ОБРАБОТКА ТРИГГЕРОВ, НЕ СВЯЗАННЫХ С СОБЫТИЯМИ ---
+        // 5. Вызываем обработчик для триггеров, не связанных с событиями (например, приземление).
         HandleLanding();
     }
 
     private void HandleLanding()
     {
         bool isGroundedNow = playerController.IsGrounded;
+
+        // Условие срабатывает ТОЛЬКО в тот кадр, когда мы перешли из "не на земле" в "на земле"
         if (!wasGroundedLastFrame && isGroundedNow)
         {
-            // Проверяем, что мы не находимся в подкате, который тоже начинается с приземления
-            if (playerSlide == null || !playerSlide.IsSliding)
+
+            if (playerController.CurrentState != PlayerController.PlayerState.Grounded)
             {
-                animator.SetTrigger(LandTrigger);
+                // Обновляем флаг и выходим, ничего не делая
+                wasGroundedLastFrame = isGroundedNow;
+                return;
+            }
+            // Проверяем, что мы не находимся в подкате, который тоже начинается с приземления
+            if (playerSlide != null && playerSlide.IsSliding)
+            {
+                // Если мы в подкате, ничего не делаем, даем ему приоритет
+            }
+            else
+            {
+                // Если мы не в подкате, решаем, какую анимацию приземления играть
+                float randomChance = UnityEngine.Random.Range(0f, 2f);
+
+                if (randomChance <= 0.975f) // 75% шанс на flair-анимацию
+                {
+                    // --- ЛОГИКА FLAIR ---
+                    Debug.Log("<color=magenta>FLAIR ANIMATION TRIGGERED!</color>");
+
+                    // Выбираем случайную анимацию ОДИН РАЗ
+                    int randomIndex = UnityEngine.Random.Range(0, 3);
+
+                    // Устанавливаем индекс для Blend Tree
+                    animator.SetFloat(FlairIndex, randomIndex);
+
+                    // Взводим триггер. Он будет "потреблен" переходом из Any State.
+                    animator.SetTrigger(LandFlairTrigger);
+                }
+                else // 25% шанс на обычное приземление
+                {
+                    // --- ЛОГИКА ОБЫЧНОГО ПРИЗЕМЛЕНИЯ ---
+                    Debug.Log("<color=green>NORMAL LANDING TRIGGERED!</color>");
+                    animator.SetTrigger(LandTrigger);
+                }
             }
         }
+
+        // В конце метода мы ОБЯЗАТЕЛЬНО обновляем состояние прошлого кадра.
+        // Это гарантирует, что блок if выше сработает только один раз.
         wasGroundedLastFrame = isGroundedNow;
     }
 

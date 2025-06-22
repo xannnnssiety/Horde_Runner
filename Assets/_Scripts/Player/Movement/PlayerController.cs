@@ -55,6 +55,7 @@ public class PlayerController : MonoBehaviour
     private PlayerWallRun _wallRunModule;
 
 
+
     [Header("Глобальные настройки")]
     public float baseMoveSpeed = 5f;
     public float maxMoveSpeed = 10f;
@@ -65,7 +66,8 @@ public class PlayerController : MonoBehaviour
     public float speedChangeRate = 2f;
 
     public float gravity = -41.62f;
-    
+
+
 
     [Header("Отладка")]
     [SerializeField] private PlayerState currentStateForInspector;
@@ -107,6 +109,9 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
+
+
+
         _inputModule.TickUpdate(); // Сначала обновляем ввод
         HandleGroundedCheck();    // Затем проверяем состояние земли
         _dashModule.TickUpdate();
@@ -120,6 +125,8 @@ public class PlayerController : MonoBehaviour
             {
                 _wallRunModule.TickUpdate();
             }
+
+
         }
         else
         {
@@ -157,6 +164,8 @@ public class PlayerController : MonoBehaviour
         
         
     }
+
+
 
     private void HandleGroundedCheck()
     {
