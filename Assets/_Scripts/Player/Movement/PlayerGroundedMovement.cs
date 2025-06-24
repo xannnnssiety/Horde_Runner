@@ -17,6 +17,8 @@ public class PlayerGroundedMovement : MonoBehaviour
     private CharacterController _characterController; // Кэшируем для удобства
     public event Action OnJump;
 
+    private readonly int manualRotationTagHash = Animator.StringToHash("ManualRootRotation");
+
     private void Awake()
     {
         // Получаем ссылки при старте
@@ -50,19 +52,27 @@ public class PlayerGroundedMovement : MonoBehaviour
 
     private void HandleMovement()
     {
+        
         // Получаем текущую скорость из контроллера
         Vector3 currentVelocity = _controller.PlayerVelocity;
 
         // Если есть ввод от игрока
         if (_controller.InputDirection.magnitude >= 0.1f)
         {
+
+            bool isManualRotationActive = _controller.Animator.GetCurrentAnimatorStateInfo(0).tagHash == manualRotationTagHash;
             // --- Поворот персонажа ---
             // Вычисляем угол поворота относительно камеры
             float targetAngle = Mathf.Atan2(_controller.InputDirection.x, _controller.InputDirection.z) * Mathf.Rad2Deg + _controller.MainCamera.transform.eulerAngles.y;
 
-            // Плавно поворачиваем персонажа
-            float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref _controller.TurnSmoothVelocity, _controller.turnSmoothTime);
-            transform.rotation = Quaternion.Euler(0f, angle, 0f);
+            if (!isManualRotationActive)
+            {
+                // Если не проигрывается особая анимация, поворачиваем персонажа как обычно.
+                float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref _controller.TurnSmoothVelocity, _controller.turnSmoothTime);
+                transform.rotation = Quaternion.Euler(0f, angle, 0f);
+            }
+
+
 
 
             // --- Движение персонажа ---

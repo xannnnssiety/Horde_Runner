@@ -21,6 +21,8 @@ public class PlayerGrind : MonoBehaviour
     private float grindCooldownTimer;
     private const float GRIND_COOLDOWN = 0.2f;
     public event Action OnJump;
+
+    private readonly int manualRotationTagHash = Animator.StringToHash("ManualRootRotation");
     private void Awake()
     {
         _controller = GetComponent<PlayerController>();
@@ -117,8 +119,16 @@ public class PlayerGrind : MonoBehaviour
         // Устанавливаем скорость движения вдоль рельсы
         _controller.PlayerVelocity = grindDirection * _controller.CurrentMoveSpeed;
 
+        bool isManualRotationActive = _controller.Animator.GetCurrentAnimatorStateInfo(0).tagHash == manualRotationTagHash;
         // Плавно поворачиваем персонажа в направлении движения
-        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(grindDirection), _controller.turnSmoothTime * 15f);
+        if (!isManualRotationActive)
+        {
+            // --- ИЗМЕНЕНИЕ ---
+            // Возвращаем оригинальную логику поворота. Она обеспечивает быстрый, почти мгновенный разворот
+            // вдоль рельсы, как и было у тебя раньше.
+            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(grindDirection), _controller.turnSmoothTime * 15f);
+        }
+        /*transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(grindDirection), _controller.turnSmoothTime * 15f);*/
     }
 
     private void HandleGrindJump()

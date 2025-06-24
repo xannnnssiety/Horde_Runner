@@ -68,8 +68,11 @@ public class PlayerDash : MonoBehaviour
 
     private void CheckForDashInput()
     {
+
+        PlayerController.PlayerState currentState = _controller.CurrentState;
+        bool canDash = currentState != PlayerController.PlayerState.Grinding;
         // Используем "Fire3" (по умолчанию Left Shift). Можно изменить на свою кнопку в Edit -> Project Settings -> Input Manager
-        if (Input.GetKeyDown(KeyCode.LeftShift) && cooldownTimer <= 0)
+        if (Input.GetKeyDown(KeyCode.LeftShift) && cooldownTimer <= 0 && canDash)
         {
             OnDash?.Invoke();
             StartDash();
