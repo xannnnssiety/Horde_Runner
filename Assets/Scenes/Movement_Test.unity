@@ -259,11 +259,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1590825695}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -617.3, y: -425.1311}
-  m_SizeDelta: {x: 574.9883, y: 82.9503}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 18.900024, y: 16.393738}
+  m_SizeDelta: {x: 574.9883, y: 82.95032}
+  m_Pivot: {x: 0, y: 0}
 --- !u!114 &408230505
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6429,12 +6429,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   TurnSmoothVelocity: 0
-  baseMoveSpeed: 15
-  maxMoveSpeed: 60
+  baseMoveSpeed: 33
+  maxMoveSpeed: 90
   turnSmoothTime: 0.1
   coyoteTime: 0.15
-  jumpHeight: 5
-  speedChangeRate: 2
+  jumpHeight: 8.5
+  speedChangeRate: 5
   gravity: -41.62
   currentStateForInspector: 0
 --- !u!114 &5361586976555951927
@@ -6449,8 +6449,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8144b8ab1cb4ea54dbc6802122196c43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dashSpeed: 110
-  dashDuration: 0.1
+  dashSpeedMultiplier: 1.5
+  dashDuration: 0.22
   dashCooldown: 1
 --- !u!114 &5361586976555951928
 MonoBehaviour:
@@ -6464,8 +6464,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd61b273c24f64a47a463fa6b21f4ad4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  slideSpeed: 110
-  slideDuration: 0.1
+  slideSpeedMultiplier: 1.5
+  slideDuration: 0.33
   slideCooldown: 1
   diveGravity: -200
 --- !u!114 &5361586976555951929

@@ -6,7 +6,7 @@ public class PlayerDash : MonoBehaviour
 {
     [Header("Настройки Дэша")]
     [Tooltip("Скорость рывка")]
-    public float dashSpeed = 25f;
+    public float dashSpeedMultiplier = 1.5f;
     [Tooltip("Как долго длится рывок в секундах")]
     public float dashDuration = 0.2f;
     [Tooltip("Время перезарядки рывка в секундах")]
@@ -22,6 +22,7 @@ public class PlayerDash : MonoBehaviour
     // Внутренние таймеры
     private float cooldownTimer;
     private float dashTimer;
+    private float targetDashSpeed;
 
     // ID Анимации
     private readonly int animIDDash = Animator.StringToHash("Dash");
@@ -85,14 +86,19 @@ public class PlayerDash : MonoBehaviour
         cooldownTimer = dashCooldown;
         dashTimer = dashDuration;
 
-        // Сообщаем аниматору, что мы начали рывок
-        _controller.Animator.SetTrigger(animIDDash);
+        // 1. Получаем текущую горизонтальную скорость в момент начала дэша.
+        float startSpeed = new Vector3(_controller.PlayerVelocity.x, 0, _controller.PlayerVelocity.z).magnitude;
 
-        // Устанавливаем скорость рывка.
-        // Рывок всегда происходит по направлению взгляда персонажа (transform.forward)
-        // Мы обнуляем вертикальную скорость, чтобы дэш в воздухе был горизонтальным
-        Vector3 dashVelocity = transform.forward * dashSpeed;
-        dashVelocity.y = 0;
+        // 2. Рассчитываем целевую скорость и СОХРАНЯЕМ ее.
+        // Если игрок стоял на месте, используем его базовую скорость, чтобы дэш все равно был мощным.
+        if (startSpeed < _controller.baseMoveSpeed)
+        {
+            startSpeed = _controller.baseMoveSpeed;
+        }
+
+        targetDashSpeed = startSpeed * dashSpeedMultiplier;
+        Vector3 dashVelocity = transform.forward * targetDashSpeed;
+        /*dashVelocity.y = 0;*/
 
         _controller.PlayerVelocity = dashVelocity;
     }
@@ -100,9 +106,9 @@ public class PlayerDash : MonoBehaviour
     private void HandleDashing()
     {
         // Пока дэш активен, мы постоянно поддерживаем скорость, чтобы на нее не влияла, например, гравитация
-        Vector3 dashVelocity = transform.forward * dashSpeed;
-        dashVelocity.y = 0;
-        _controller.PlayerVelocity = dashVelocity;
+        Vector3 dashVelocity = transform.forward * targetDashSpeed;
+        /*dashVelocity.y = 0;*/
+        _controller.PlayerVelocity = new Vector3(dashVelocity.x, 0, dashVelocity.z);
     }
 
     private void EndDash()

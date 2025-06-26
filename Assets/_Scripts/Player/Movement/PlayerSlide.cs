@@ -7,7 +7,7 @@ public class PlayerSlide : MonoBehaviour
 {
     [Header("Настройки подката")]
     [Tooltip("Скорость во время подката на земле")]
-    public float slideSpeed = 10f;
+    public float slideSpeedMultiplier = 2f;
     [Tooltip("Как долго длится подкат в секундах")]
     public float slideDuration = 0.7f;
     [Tooltip("Время перезарядки подката в секундах")]
@@ -15,6 +15,7 @@ public class PlayerSlide : MonoBehaviour
     [Tooltip("Усиленная гравитация при активации в воздухе (чтобы быстрее упасть)")]
     public float diveGravity = -200f;
     public event Action OnJump;
+    public event Action OnSlideEnd;
 
     // Публичное свойство, чтобы контроллер и другие модули знали о нашем состоянии
     public bool IsSliding { get; private set; }
@@ -27,7 +28,7 @@ public class PlayerSlide : MonoBehaviour
     private float slideTimer;
     private float cooldownTimer;
     private bool isDiving; // Флаг, показывающий, что мы активировали подкат в воздухе и падаем
-
+    private float targetSlideSpeed;
     // ID Анимации
     private readonly int animIDSlide = Animator.StringToHash("Slide");
 
@@ -126,7 +127,7 @@ private void UpdateSlideState()
             }
             else
             {
-                Vector3 slideVelocity = transform.forward * slideSpeed;
+                Vector3 slideVelocity = transform.forward * targetSlideSpeed;
                 _controller.PlayerVelocity = new Vector3(slideVelocity.x, _controller.PlayerVelocity.y, slideVelocity.z);
             }
         }
@@ -137,16 +138,31 @@ private void UpdateSlideState()
         IsSliding = true;
         _controller.Animator.SetBool(animIDSlide, true); // Используем Bool, а не Trigger
 
+        // 1. Получаем текущую горизонтальную скорость в МОМЕНТ НАЧАЛА подката.
+        float startSpeed = new Vector3(_controller.PlayerVelocity.x, 0, _controller.PlayerVelocity.z).magnitude;
+
+        // 2. Рассчитываем целевую скорость и СОХРАНЯЕМ ее в нашу переменную.
+        // Если начальная скорость была очень низкой (например, 0), используем хотя бы базовую скорость, чтобы был импульс.
+        if (startSpeed < _controller.baseMoveSpeed)
+        {
+            startSpeed = _controller.baseMoveSpeed;
+        }
+        targetSlideSpeed = startSpeed * slideSpeedMultiplier;
         // Возможно, потребуется изменить размер коллайдера, чтобы персонаж "пригнулся"
         // Например: _characterController.height = 0.8f;
     }
 
     private void EndSlide()
     {
+        
         // Проверяем, действительно ли мы были в состоянии скольжения, чтобы не запустить кулдаун случайно
         if (IsSliding)
         {
-            cooldownTimer = slideCooldown; 
+            cooldownTimer = slideCooldown;
+
+            var velocity = _controller.PlayerVelocity;
+            velocity.y = 1.0f;
+            _controller.PlayerVelocity = velocity;
         }
 
         IsSliding = false;

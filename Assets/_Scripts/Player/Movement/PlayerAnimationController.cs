@@ -18,6 +18,7 @@ public class PlayerAnimationController : MonoBehaviour
 
     // --- ВНУТРЕННИЕ ПЕРЕМЕННЫЕ ---
     private bool wasGroundedLastFrame;
+   
 
     // --- ХЭШИ ПАРАМЕТРОВ АНИМАТОРА ---
     // Это самый быстрый способ работы с параметрами.
@@ -81,6 +82,9 @@ public class PlayerAnimationController : MonoBehaviour
         if (playerSlide != null) playerSlide.OnJump += TriggerJump;
         else Debug.LogWarning("Не удалось подписаться на прыжок: PlayerSlide не найден.");
 
+        if (playerSlide != null) playerSlide.OnSlideEnd += OnSlideFinished;
+        else Debug.LogWarning("Не удалось подписаться на окончание слайда: PlayerSlide не найден.");
+
         // Добавьте здесь подписки на OnDash, если реализуете.
     }
 
@@ -93,6 +97,7 @@ public class PlayerAnimationController : MonoBehaviour
         if (playerWallMovement != null) playerWallMovement.OnJump -= TriggerJump;
         if (playerWallRun != null) playerWallRun.OnJump -= TriggerJump;
         if (playerSlide != null) playerSlide.OnJump -= TriggerJump;
+        if (playerSlide != null) playerSlide.OnSlideEnd -= OnSlideFinished;
     }
 
     void Start()
@@ -105,6 +110,8 @@ public class PlayerAnimationController : MonoBehaviour
         }
     }
 
+
+
     // 5. ИСПОЛЬЗУЕМ LateUpdate, чтобы гарантированно получать финальные данные за кадр.
     void LateUpdate()
     {
@@ -114,7 +121,17 @@ public class PlayerAnimationController : MonoBehaviour
         }
     }
 
+
     // --- ОСНОВНЫЕ МЕТОДЫ ---
+
+
+    private void OnSlideFinished()
+    {
+        // Когда слайд заканчивается, мы тоже вызываем логику приземления
+        Debug.Log("<color=yellow>SLIDE ENDED, triggering landing logic.</color>");
+        
+        PlayLandingAnimation();
+    }
 
     private void UpdateAllParameters()
     {
@@ -148,6 +165,9 @@ public class PlayerAnimationController : MonoBehaviour
         // Персонаж считается "на земле" для аниматора, только если он физически на земле
         // И при этом НЕ выполняет грайнд или подкат (которые тоже могут касаться земли).
         bool isGroundedForAnimator = playerController.IsGrounded && !isGrinding && !isSliding;
+
+ 
+
         animator.SetBool(IsGrounded, isGroundedForAnimator);
 
         // 4. Обрабатываем специфичную логику для бега по стене (определение стороны).
@@ -164,58 +184,48 @@ public class PlayerAnimationController : MonoBehaviour
 
         // 5. Вызываем обработчик для триггеров, не связанных с событиями (например, приземление).
         HandleLanding();
+
+        
     }
+
+
 
     private void HandleLanding()
     {
         bool isGroundedNow = playerController.IsGrounded;
-
-        // Условие срабатывает ТОЛЬКО в тот кадр, когда мы перешли из "не на земле" в "на земле"
         if (!wasGroundedLastFrame && isGroundedNow)
         {
-
-            if (playerController.CurrentState != PlayerController.PlayerState.Grounded)
-            {
-                // Обновляем флаг и выходим, ничего не делая
-                wasGroundedLastFrame = isGroundedNow;
-                return;
-            }
-            // Проверяем, что мы не находимся в подкате, который тоже начинается с приземления
-            if (playerSlide != null && playerSlide.IsSliding)
-            {
-                // Если мы в подкате, ничего не делаем, даем ему приоритет
-            }
-            else
-            {
-                // Если мы не в подкате, решаем, какую анимацию приземления играть
-                float randomChance = UnityEngine.Random.Range(0f, 2f);
-
-                if (randomChance <= 0.975f) // 75% шанс на flair-анимацию
-                {
-                    // --- ЛОГИКА FLAIR ---
-                    Debug.Log("<color=magenta>FLAIR ANIMATION TRIGGERED!</color>");
-
-                    // Выбираем случайную анимацию ОДИН РАЗ
-                    int randomIndex = UnityEngine.Random.Range(0, 3);
-
-                    // Устанавливаем индекс для Blend Tree
-                    animator.SetFloat(FlairIndex, randomIndex);
-
-                    // Взводим триггер. Он будет "потреблен" переходом из Any State.
-                    animator.SetTrigger(LandFlairTrigger);
-                }
-                else // 25% шанс на обычное приземление
-                {
-                    // --- ЛОГИКА ОБЫЧНОГО ПРИЗЕМЛЕНИЯ ---
-                    Debug.Log("<color=green>NORMAL LANDING TRIGGERED!</color>");
-                    animator.SetTrigger(LandTrigger);
-                }
-            }
+            // Теперь этот метод просто вызывает нашу общую логику
+            PlayLandingAnimation();
         }
-
-        // В конце метода мы ОБЯЗАТЕЛЬНО обновляем состояние прошлого кадра.
-        // Это гарантирует, что блок if выше сработает только один раз.
         wasGroundedLastFrame = isGroundedNow;
+    }
+
+
+
+    private void PlayLandingAnimation()
+    {
+        // Проверяем, что мы не в подкате (на всякий случай, чтобы избежать зацикливания)
+        if (playerSlide != null && playerSlide.IsSliding) return;
+
+        // Проверяем, что мы на земле, а не, например, спрыгнули с рельсы
+        if (playerController.CurrentState != PlayerController.PlayerState.Grounded) return;
+
+        // Решаем, какую анимацию приземления играть
+        float randomChance = UnityEngine.Random.Range(0f, 1f);
+        if (randomChance <= 0.66f)
+        {
+            Debug.Log("<color=magenta>FLAIR ANIMATION TRIGGERED!</color>");
+            int randomIndex = UnityEngine.Random.Range(0, 3); // Диапазон анимаций: max (НЕ включительно).
+            animator.SetFloat(FlairIndex, randomIndex);
+            animator.SetTrigger(LandFlairTrigger);
+            // Мы больше не блокируем управление, так как это чисто визуальный эффект
+        }
+        else
+        {
+            Debug.Log("<color=green>NORMAL LANDING TRIGGERED!</color>");
+            animator.SetTrigger(LandTrigger);
+        }
     }
 
     // --- МЕТОДЫ-СЛУШАТЕЛИ СОБЫТИЙ ---
