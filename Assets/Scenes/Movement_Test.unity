@@ -6356,7 +6356,7 @@ MonoBehaviour:
   grindableLayer:
     serializedVersion: 2
     m_Bits: 128
-  grindSearchRadius: 6
+  grindSearchRadius: 10
 --- !u!114 &5361586976555951921
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -59,10 +59,22 @@ public class PlayerGrind : MonoBehaviour
     {
         if (currentGrindRail == null) { EndGrind(false); return; }
 
+        if (Input.GetButtonDown("Jump"))
+        {
+            EndGrind(true);
+            return;
+        }
+
         HandleSpeed();
         HandleRailSwitching();
+
+        if (currentGrindRail == null)
+        {
+            return; // Выходим. В следующем кадре первая проверка сработает и вызовет EndGrind.
+        }
+
         HandleMovementOnRail();
-        HandleGrindJump();
+        /*HandleGrindJump();*/
 
 
     }
@@ -143,6 +155,13 @@ public class PlayerGrind : MonoBehaviour
 
     private void StartGrind(Transform rail)
     {
+        if (rail == null)
+        {
+            Debug.LogError("Попытка начать грайнд на NULL рельсе!", this);
+            return; // Не начинаем грайнд, если рельса недействительна
+        }
+
+        currentGrindRail = rail;
         _controller.SetState(PlayerController.PlayerState.Grinding);
 
         // Обнуляем вертикальную скорость
@@ -150,7 +169,7 @@ public class PlayerGrind : MonoBehaviour
         velocity.y = 0;
         _controller.PlayerVelocity = velocity;
 
-        currentGrindRail = rail;
+
 
         // Определяем направление движения по рельсе
         float dot = Vector3.Dot(transform.forward, currentGrindRail.forward);

@@ -18,6 +18,7 @@ public class PlayerAnimationController : MonoBehaviour
 
     // --- ВНУТРЕННИЕ ПЕРЕМЕННЫЕ ---
     private bool wasGroundedLastFrame;
+
    
 
     // --- ХЭШИ ПАРАМЕТРОВ АНИМАТОРА ---
@@ -35,6 +36,8 @@ public class PlayerAnimationController : MonoBehaviour
     private static readonly int LandTrigger = Animator.StringToHash("Land");
     private static readonly int LandFlairTrigger = Animator.StringToHash("LandFlair"); 
     private static readonly int FlairIndex = Animator.StringToHash("FlairIndex");
+    private static readonly int JumpFlairTrigger = Animator.StringToHash("JumpFlair");
+    private static readonly int JumpFlairIndex = Animator.StringToHash("JumpFlairIndex");
 
     // --- МЕТОДЫ ЖИЗНЕННОГО ЦИКЛА UNITY ---
 
@@ -213,10 +216,10 @@ public class PlayerAnimationController : MonoBehaviour
 
         // Решаем, какую анимацию приземления играть
         float randomChance = UnityEngine.Random.Range(0f, 1f);
-        if (randomChance <= 0.66f)
+        if (randomChance <= 0.5f)
         {
             Debug.Log("<color=magenta>FLAIR ANIMATION TRIGGERED!</color>");
-            int randomIndex = UnityEngine.Random.Range(0, 3); // Диапазон анимаций: max (НЕ включительно).
+            int randomIndex = UnityEngine.Random.Range(0, 5); // Диапазон анимаций: max (НЕ включительно).
             animator.SetFloat(FlairIndex, randomIndex);
             animator.SetTrigger(LandFlairTrigger);
             // Мы больше не блокируем управление, так как это чисто визуальный эффект
@@ -231,10 +234,30 @@ public class PlayerAnimationController : MonoBehaviour
     // --- МЕТОДЫ-СЛУШАТЕЛИ СОБЫТИЙ ---
     private void TriggerJump()
     {
-        // Проверяем, что у нас есть аниматор, прежде чем вызывать триггер
-        if (animator != null)
+        if (animator == null) return; // Проверка на всякий случай
+
+        // --- НОВАЯ ЛОГИКА С ШАНСОМ ---
+        // Генерируем случайное число от 0.0 до 1.0
+        float randomChance = UnityEngine.Random.Range(0f, 1f);
+
+        if (randomChance <= 0.75f) // 75% шанс на "стильный" прыжок
         {
-            Debug.Log("<color=cyan>ANIMATION: Jump Triggered!</color>");
+            Debug.Log("<color=cyan>FLAIR JUMP TRIGGERED!</color>");
+
+            // Выбираем случайную анимацию из двух
+            int randomIndex = UnityEngine.Random.Range(0, 3); // вернет 0 или 1
+
+            // Устанавливаем индекс для Blend Tree
+            animator.SetFloat(JumpFlairIndex, randomIndex);
+
+            // Взводим триггер для стильного прыжка
+            animator.SetTrigger(JumpFlairTrigger);
+        }
+        else // 25% шанс на обычный прыжок
+        {
+            Debug.Log("<color=blue>NORMAL JUMP TRIGGERED!</color>");
+
+            // Взводим триггер для обычного прыжка
             animator.SetTrigger(JumpTrigger);
         }
     }

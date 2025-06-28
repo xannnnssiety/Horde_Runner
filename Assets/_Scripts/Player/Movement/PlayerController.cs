@@ -110,13 +110,15 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
 
-
-
         _inputModule.TickUpdate(); // Сначала обновляем ввод
         HandleGroundedCheck();    // Затем проверяем состояние земли
         _dashModule.TickUpdate();
         _slideModule.TickUpdate();
 
+        if (CurrentState != PlayerState.WallRunning && CurrentState != PlayerState.Grinding)
+        {
+            _grindModule.CheckForGrindStart();
+        }
 
         if (_dashModule.IsDashing || _slideModule.IsSliding || _wallRunModule.IsWallRunning)
         {
@@ -150,7 +152,7 @@ public class PlayerController : MonoBehaviour
                     _wallMovementModule.TickUpdate(); // Модуль стены сам обработает прыжок и падение
                     break;
                 case PlayerState.Sliding: 
-                    _slideModule.TickUpdate();
+                    /*_slideModule.TickUpdate();*/
                     break;
             }
         }
