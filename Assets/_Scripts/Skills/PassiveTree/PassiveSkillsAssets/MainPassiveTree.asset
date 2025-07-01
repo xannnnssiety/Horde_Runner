@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc6bb4834d197bd47abf34db2d0ee849, type: 3}
+  m_Name: MainPassiveTree
+  m_EditorClassIdentifier: 
+  allSkills:
+  - {fileID: 11400000, guid: b42ff72d0f832d64ab28d07f2a211493, type: 2}
+  - {fileID: 11400000, guid: e280539fc3494d94a8d7f21be08dcd6f, type: 2}
+  - {fileID: 11400000, guid: 7ed71b7807f9d9b4bb7be01377ab30ea, type: 2}
+  - {fileID: 11400000, guid: 0e1566b352ace6940ac52df02db9f618, type: 2}
+  - {fileID: 11400000, guid: 299bfeaa33b31cc46aaff0add9ecc0e6, type: 2}
+  - {fileID: 11400000, guid: 75f72fe745af29746926cfa0f716ec45, type: 2}
