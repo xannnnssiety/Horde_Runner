@@ -322,7 +322,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 18.900024, y: 16.393738}
+  m_AnchoredPosition: {x: 18.899902, y: 16.393799}
   m_SizeDelta: {x: 574.9883, y: 82.95032}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &408230505
@@ -1226,16 +1226,16 @@ GameObject:
   m_Component:
   - component: {fileID: 1302480107}
   - component: {fileID: 1302480109}
-  - component: {fileID: 1302480108}
   - component: {fileID: 1302480111}
   - component: {fileID: 1302480110}
+  - component: {fileID: 1302480112}
   m_Layer: 5
   m_Name: PassiveTree
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1302480107
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1257,36 +1257,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1302480108
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1302480106}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 0}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
 --- !u!222 &1302480109
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1331,14 +1301,33 @@ MonoBehaviour:
   skillTreeAsset: {fileID: 11400000, guid: e905994e5715e6f40a2be41762f38c1e, type: 2}
   gameManager: {fileID: 63767938}
   contentRect: {fileID: 1723831176}
-  skillNodePrefab: {fileID: 8725375376106029899, guid: 5d97bc2aae0b8cb49b2ea8160f4e8094, type: 3}
+  skillNodePrefab: {fileID: 4902619573090870007, guid: 5d97bc2aae0b8cb49b2ea8160f4e8094, type: 3}
   linePrefab: {fileID: 4563303249982437438, guid: 58bda53d85834b642995dc352079fbe9, type: 3}
   nodeContainer: {fileID: 1926757283}
   lineContainer: {fileID: 1577580585}
   gridSpacing: 150
+  normalNodeSize: {x: 80, y: 80}
+  notableNodeSize: {x: 120, y: 120}
+  keystoneNodeSize: {x: 160, y: 160}
   navigationController: {fileID: 1302480110}
-  unlockedLineColor: {r: 0.015686274, g: 1, b: 0.51916265, a: 1}
+  unlockedLineColor: {r: 0.5803922, g: 1, b: 0.77254903, a: 0.8235294}
   lockedLineColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  unlockedNodeColor: {r: 0.015686274, g: 1, b: 0.54461473, a: 0.85882354}
+  canBeUnlockedNodeColor: {r: 1, g: 1, b: 1, a: 1}
+  lockedNodeColor: {r: 0.5, g: 0.5, b: 0.5, a: 0.85882354}
+--- !u!114 &1302480112
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1302480106}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4204152b61f5813459d8b533fc664f2a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tooltipPrefab: {fileID: 8019626583629630621, guid: 03c86b57a721ebe4db8f95bcbd842355, type: 3}
 --- !u!1 &1385711063
 GameObject:
   m_ObjectHideFlags: 0
@@ -1616,7 +1605,7 @@ GameObject:
   - component: {fileID: 1582238698}
   - component: {fileID: 1582238697}
   m_Layer: 5
-  m_Name: Image
+  m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1756,7 +1745,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
-  m_AdditionalShaderChannelsFlag: 0
+  m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
   m_SortingOrder: 0

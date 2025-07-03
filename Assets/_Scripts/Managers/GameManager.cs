@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -14,11 +15,20 @@ public class GameManager : MonoBehaviour
         LoadProgress();
     }
 
+    private void Update()
+    {
+        // Отладочная функция: сброс прогресса по нажатию на R
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            ResetAllProgress();
+        }
+    }
+
     public void LoadProgress()
     {
         // Загружаем данные из файла
         _saveData = SaveManager.LoadGame();
-
+        _saveData.currency = 100; // Временно устанавливаем валюту для теста
         // Применяем загруженный прогресс
         ApplyLoadedPassives();
 
@@ -63,17 +73,70 @@ public class GameManager : MonoBehaviour
     // Этот метод будет вызываться из UI, когда игрок покупает новый навык
     public void UnlockPassive(PassiveSkillData newSkill)
     {
-        if (_saveData.currency >= newSkill.cost && !_saveData.unlockedPassiveIDs.Contains(newSkill.skillID))
+        // --- ПРОВЕРКА 1: Не изучен ли навык уже? ---
+        if (_saveData.unlockedPassiveIDs.Contains(newSkill.skillID))
         {
-            _saveData.currency -= newSkill.cost;
-            _saveData.unlockedPassiveIDs.Add(newSkill.skillID);
-
-            playerStats.ApplyPassive(newSkill);
-
-            // Сохраняем игру после каждого важного изменения
-            SaveProgress();
-
-            // TODO: Обновить UI дерева и валюты
+            Debug.Log($"Навык '{newSkill.skillName}' уже изучен.");
+            return;
         }
+
+        // --- ПРОВЕРКА 2: Хватает ли валюты? ---
+        if (_saveData.currency < newSkill.cost)
+        {
+            Debug.Log($"Недостаточно валюты для изучения '{newSkill.skillName}'. Нужно: {newSkill.cost}, есть: {_saveData.currency}");
+            // TODO: Показать игроку сообщение об ошибке
+            return;
+        }
+
+        // --- ПРОВЕРКА 3: Изучены ли все предыдущие навыки? ---
+        foreach (var prerequisite in newSkill.prerequisites)
+        {
+            if (!_saveData.unlockedPassiveIDs.Contains(prerequisite.skillID))
+            {
+                Debug.Log($"Не выполнены требования для '{newSkill.skillName}'. Нужно изучить: '{prerequisite.skillName}'");
+                // TODO: Показать игроку сообщение об ошибке
+                return;
+            }
+        }
+
+        // --- ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ, СОВЕРШАЕМ ПОКУПКУ ---
+        Debug.Log($"<color=green>Изучен новый навык: {newSkill.skillName}</color>");
+
+        // 1. Списываем валюту
+        _saveData.currency -= newSkill.cost;
+
+        // 2. Добавляем ID в список изученных
+        _saveData.unlockedPassiveIDs.Add(newSkill.skillID);
+
+        // 3. Применяем эффекты к статам персонажа
+        playerStats.ApplyPassive(newSkill);
+
+        // 4. Активируем уникальное поведение, если оно есть
+        if (newSkill.uniqueBehaviourPrefab != null)
+        {
+            // Создаем экземпляр префаба и делаем его дочерним к объекту со статами
+            Instantiate(newSkill.uniqueBehaviourPrefab, playerStats.transform);
+        }
+
+        // 5. Сохраняем игру после каждого важного изменения
+        SaveProgress();
+
+        // 6. UI обновится автоматически, так как его вызывает PassiveTree_UI_Manager
+    }
+
+    public void ResetAllProgress()
+    {
+        Debug.LogWarning("--- ПРОГРЕСС ПОЛНОСТЬЮ СБРОШЕН! ---");
+
+        // 1. Создаем абсолютно новый, пустой объект SaveData
+        SaveData freshSaveData = new SaveData();
+
+        // 2. Сохраняем эти пустые данные в файл, затирая старое сохранение
+        SaveManager.SaveGame(freshSaveData);
+
+        // 3. Перезагружаем текущую сцену, чтобы все изменения применились.
+        // Это самый надежный способ убедиться, что все системы (PlayerStats, UI)
+        // начнут работать с чистого листа.
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }

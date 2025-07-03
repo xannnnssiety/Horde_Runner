@@ -1,8 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using System;
 
-public class PassiveSkill_UI_Node : MonoBehaviour
+public class PassiveSkill_UI_Node : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     // Ссылки на компоненты этого префаба
     [SerializeField] private Image iconImage;
@@ -34,20 +35,26 @@ public class PassiveSkill_UI_Node : MonoBehaviour
     }
 
     // Метод для обновления внешнего вида (изучен, доступен, заблокирован)
-    public void UpdateVisuals(bool isUnlocked, bool canBeUnlocked)
+    public void UpdateVisuals(Color frameColor)
     {
-        // Пример простой логики подсветки
-        if (isUnlocked)
+        // Просто устанавливаем тот цвет, который нам передали
+        if (frameImage != null)
         {
-            frameImage.color = Color.yellow; // Изучен - золотой
-        }
-        else if (canBeUnlocked)
-        {
-            frameImage.color = Color.white; // Доступен для изучения - белый
-        }
-        else
-        {
-            frameImage.color = Color.gray; // Заблокирован - серый
+            frameImage.color = frameColor;
         }
     }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        // Вызываем менеджер тултипов и просим его показать информацию о нашем навыке
+        TooltipManager.Instance.ShowTooltip(_skillData.skillName, _skillData.description);
+    }
+
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        // Просим менеджер спрятать подсказку
+        TooltipManager.Instance.HideTooltip();
+    }
+
 }

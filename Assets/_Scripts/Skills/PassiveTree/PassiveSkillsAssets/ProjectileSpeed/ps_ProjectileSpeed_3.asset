@@ -19,7 +19,7 @@ MonoBehaviour:
   icon: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   cost: 1
   skillTier: 0
-  gridPosition: {x: 40, y: 25}
+  gridPosition: {x: 0, y: 4}
   prerequisites:
   - {fileID: 11400000, guid: e280539fc3494d94a8d7f21be08dcd6f, type: 2}
   modifiers:

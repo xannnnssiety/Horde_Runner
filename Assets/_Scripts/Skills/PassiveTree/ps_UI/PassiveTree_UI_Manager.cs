@@ -16,18 +16,31 @@ public class PassiveTree_UI_Manager : MonoBehaviour
     [SerializeField] private Transform lineContainer;
     [SerializeField] private float gridSpacing = 150f; // Расстояние между узлами
 
+    [Header("Размеры узлов по тирам")]
+    [Tooltip("Размер для обычных навыков (Normal)")]
+    [SerializeField] private Vector2 normalNodeSize = new Vector2(80, 80);
+    [Tooltip("Размер для примечательных навыков (Notable)")]
+    [SerializeField] private Vector2 notableNodeSize = new Vector2(120, 120);
+    [Tooltip("Размер для ключевых навыков (Keystone)")]
+    [SerializeField] private Vector2 keystoneNodeSize = new Vector2(160, 160);
+
     [Header("Ссылки на компоненты")]
     [SerializeField] private PassiveTree_Navigation navigationController;
 
-    [Header("Цвета")]
+    [Header("Цвета линий")]
     [SerializeField] private Color unlockedLineColor = Color.yellow;
     [SerializeField] private Color lockedLineColor = Color.gray;
+    [Header("Цвета скиллов")]
+    [SerializeField] private Color unlockedNodeColor = Color.yellow;
+    [SerializeField] private Color canBeUnlockedNodeColor = Color.white;
+    [SerializeField] private Color lockedNodeColor = Color.gray;
 
 
     // Ссылка на "соседний" компонент навигации
     private PassiveTree_Navigation _navigationController;
     // Словарь для быстрого доступа к UI-узлам по их ID
     private Dictionary<string, PassiveSkill_UI_Node> _uiNodes = new Dictionary<string, PassiveSkill_UI_Node>();
+    private List<Image> _connectionLines = new List<Image>();
 
 
     private void Awake()
@@ -52,7 +65,28 @@ public class PassiveTree_UI_Manager : MonoBehaviour
         foreach (PassiveSkillData skillData in skillTreeAsset.allSkills)
         {
             GameObject nodeObject = Instantiate(skillNodePrefab, nodeContainer);
-            nodeObject.GetComponent<RectTransform>().anchoredPosition = skillData.gridPosition * gridSpacing;
+            /*nodeObject.GetComponent<RectTransform>().anchoredPosition = skillData.gridPosition * gridSpacing;*/
+
+            RectTransform nodeRectTransform = nodeObject.GetComponent<RectTransform>();
+            // Устанавливаем позицию на сетке
+            nodeRectTransform.anchoredPosition = skillData.gridPosition * gridSpacing;
+
+            switch (skillData.skillTier)
+            {
+                case PassiveSkillTier.Normal:
+                    nodeRectTransform.sizeDelta = normalNodeSize;
+                    break;
+                case PassiveSkillTier.Notable:
+                    nodeRectTransform.sizeDelta = notableNodeSize;
+                    break;
+                case PassiveSkillTier.Keystone:
+                    nodeRectTransform.sizeDelta = keystoneNodeSize;
+                    break;
+                default: // На случай, если мы добавим новый тир, а сюда логику - нет
+                    nodeRectTransform.sizeDelta = normalNodeSize;
+                    break;
+            }
+
             PassiveSkill_UI_Node uiNode = nodeObject.GetComponent<PassiveSkill_UI_Node>();
             uiNode.Setup(skillData, this);
             _uiNodes.Add(skillData.skillID, uiNode);
@@ -94,52 +128,64 @@ public class PassiveTree_UI_Manager : MonoBehaviour
 
     private void DrawConnectionLines()
     {
-        SaveData saveData = SaveManager.LoadGame();
+        // Очищаем старый список линий
+        _connectionLines.Clear();
 
         foreach (PassiveSkillData skillData in skillTreeAsset.allSkills)
         {
-            // Проходим по всем "родителям" (prerequisites) текущего навыка
             if (skillData.prerequisites != null)
             {
                 foreach (PassiveSkillData prerequisiteData in skillData.prerequisites)
                 {
-                    // Находим UI-узлы для дочернего и родительского навыков
                     if (_uiNodes.TryGetValue(skillData.skillID, out PassiveSkill_UI_Node childNode) &&
                         _uiNodes.TryGetValue(prerequisiteData.skillID, out PassiveSkill_UI_Node parentNode))
                     {
-                        // Создаем объект линии из префаба
+                        // Создаем объект линии
                         GameObject lineObj = Instantiate(linePrefab, lineContainer);
-                        RectTransform lineRect = lineObj.GetComponent<RectTransform>();
                         Image lineImage = lineObj.GetComponent<Image>();
 
-                        // Получаем позиции узлов в координатах Canvas
+                        // --- Математика для позиционирования (остается без изменений) ---
+                        RectTransform lineRect = lineObj.GetComponent<RectTransform>();
                         Vector2 parentPos = parentNode.GetComponent<RectTransform>().anchoredPosition;
                         Vector2 childPos = childNode.GetComponent<RectTransform>().anchoredPosition;
-
-                        // --- Математика для позиционирования и вращения линии ---
-
-                        // 1. Устанавливаем позицию линии в позицию родительского узла
-                        lineRect.anchoredPosition = parentPos;
-
-                        // 2. Вычисляем вектор направления от родителя к ребенку
                         Vector2 direction = (childPos - parentPos).normalized;
-
-                        // 3. Вычисляем расстояние между узлами - это будет длина нашей линии
                         float distance = Vector2.Distance(parentPos, childPos);
-
-                        // 4. Устанавливаем длину линии (растягиваем по ширине)
+                        lineRect.anchoredPosition = parentPos;
                         lineRect.sizeDelta = new Vector2(distance, lineRect.sizeDelta.y);
-
-                        // 5. Находим угол поворота линии
                         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-
-                        // 6. Применяем поворот
                         lineRect.rotation = Quaternion.Euler(0, 0, angle);
 
-                        // 7. Устанавливаем цвет линии
+                        // --- СОХРАНЯЕМ ЛИНИЮ В СПИСОК ---
+                        _connectionLines.Add(lineImage);
+                    }
+                }
+            }
+        }
+
+        // После создания всех линий, один раз обновляем их цвет
+        UpdateLineVisuals();
+    }
+
+    private void UpdateLineVisuals()
+    {
+        SaveData saveData = SaveManager.LoadGame();
+        int lineIndex = 0; // Нам нужен счетчик, чтобы сопоставить линии с навыками
+
+        foreach (PassiveSkillData skillData in skillTreeAsset.allSkills)
+        {
+            if (skillData.prerequisites != null)
+            {
+                foreach (PassiveSkillData prerequisiteData in skillData.prerequisites)
+                {
+                    // Убедимся, что индекс не выходит за пределы списка
+                    if (lineIndex < _connectionLines.Count)
+                    {
                         bool isParentUnlocked = saveData.unlockedPassiveIDs.Contains(prerequisiteData.skillID);
                         bool isChildUnlocked = saveData.unlockedPassiveIDs.Contains(skillData.skillID);
-                        lineImage.color = (isParentUnlocked && isChildUnlocked) ? unlockedLineColor : lockedLineColor;
+
+                        // Раскрашиваем соответствующую линию
+                        _connectionLines[lineIndex].color = (isParentUnlocked && isChildUnlocked) ? unlockedLineColor : lockedLineColor;
+                        lineIndex++;
                     }
                 }
             }
@@ -175,7 +221,21 @@ public class PassiveTree_UI_Manager : MonoBehaviour
                 canBeUnlocked = false;
             }
 
-            uiNode.UpdateVisuals(isUnlocked, canBeUnlocked);
+            Color targetColor;
+            if (isUnlocked)
+            {
+                targetColor = unlockedNodeColor;
+            }
+            else if (canBeUnlocked)
+            {
+                targetColor = canBeUnlockedNodeColor;
+            }
+            else
+            {
+                targetColor = lockedNodeColor;
+            }
+
+            uiNode.UpdateVisuals(targetColor);
         }
     }
 
@@ -187,5 +247,6 @@ public class PassiveTree_UI_Manager : MonoBehaviour
 
         // После попытки разблокировки обновляем все дерево, чтобы отобразить изменения
         UpdateAllNodeVisuals();
+        UpdateLineVisuals();
     }
 }
