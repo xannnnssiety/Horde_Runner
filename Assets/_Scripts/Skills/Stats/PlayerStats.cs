@@ -25,11 +25,13 @@ public class PlayerStats : MonoBehaviour
     private void InitializeStats()
     {
         _stats.Add(StatType.MaxHealth, new Stat(100));
-        _stats.Add(StatType.MoveSpeed, new Stat(5));
+        _stats.Add(StatType.MoveSpeed, new Stat(60));
         _stats.Add(StatType.Damage, new Stat(100)); // 100% базового урона
         _stats.Add(StatType.AreaOfEffect, new Stat(100)); // 100% базового радиуса
         _stats.Add(StatType.Cooldown, new Stat(100)); // 100% базовой перезарядки
         _stats.Add(StatType.ProjectileSpeed, new Stat(100)); // 100% базовой скорости
+        _stats.Add(StatType.Amount, new Stat(1));
+        _stats.Add(StatType.PickupRadius, new Stat(10));
         // ... добавьте сюда все остальные статы из вашего enum StatType
     }
 

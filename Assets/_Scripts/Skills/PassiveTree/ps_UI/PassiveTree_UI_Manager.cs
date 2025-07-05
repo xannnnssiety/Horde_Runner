@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using UnityEditor.Overlays;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -29,6 +31,7 @@ public class PassiveTree_UI_Manager : MonoBehaviour
 
     [Header("Цвета линий")]
     [SerializeField] private Color unlockedLineColor = Color.yellow;
+    [SerializeField] private Color canBeUnlockedLineColor = Color.white;
     [SerializeField] private Color lockedLineColor = Color.gray;
     [Header("Цвета скиллов")]
     [SerializeField] private Color unlockedNodeColor = Color.yellow;
@@ -100,6 +103,8 @@ public class PassiveTree_UI_Manager : MonoBehaviour
         // --- ЭТАП 3: Обновляем внешний вид всех узлов ---
         UpdateAllNodeVisuals();
 
+        UpdateLineVisuals();
+
         if (navigationController != null)
         {
             navigationController.EnableNavigation();
@@ -128,73 +133,51 @@ public class PassiveTree_UI_Manager : MonoBehaviour
 
     private void DrawConnectionLines()
     {
-        // Очищаем старый список линий
+        // Очищаем старый список линий перед перерисовкой
         _connectionLines.Clear();
 
         foreach (PassiveSkillData skillData in skillTreeAsset.allSkills)
         {
-            if (skillData.prerequisites != null)
+            if (skillData.prerequisiteGroups != null)
             {
-                foreach (PassiveSkillData prerequisiteData in skillData.prerequisites)
+                foreach (PrerequisiteGroup group in skillData.prerequisiteGroups)
                 {
-                    if (_uiNodes.TryGetValue(skillData.skillID, out PassiveSkill_UI_Node childNode) &&
-                        _uiNodes.TryGetValue(prerequisiteData.skillID, out PassiveSkill_UI_Node parentNode))
+                    foreach (PassiveSkillData prerequisiteData in group.requiredSkills)
                     {
-                        // Создаем объект линии
-                        GameObject lineObj = Instantiate(linePrefab, lineContainer);
-                        Image lineImage = lineObj.GetComponent<Image>();
+                        if (_uiNodes.TryGetValue(skillData.skillID, out PassiveSkill_UI_Node childNode) &&
+                            _uiNodes.TryGetValue(prerequisiteData.skillID, out PassiveSkill_UI_Node parentNode))
+                        {
+                            // Создаем объект линии из префаба
+                            GameObject lineObj = Instantiate(linePrefab, lineContainer);
+                            Image lineImage = lineObj.GetComponent<Image>();
+                            RectTransform lineRect = lineObj.GetComponent<RectTransform>();
 
-                        // --- Математика для позиционирования (остается без изменений) ---
-                        RectTransform lineRect = lineObj.GetComponent<RectTransform>();
-                        Vector2 parentPos = parentNode.GetComponent<RectTransform>().anchoredPosition;
-                        Vector2 childPos = childNode.GetComponent<RectTransform>().anchoredPosition;
-                        Vector2 direction = (childPos - parentPos).normalized;
-                        float distance = Vector2.Distance(parentPos, childPos);
-                        lineRect.anchoredPosition = parentPos;
-                        lineRect.sizeDelta = new Vector2(distance, lineRect.sizeDelta.y);
-                        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-                        lineRect.rotation = Quaternion.Euler(0, 0, angle);
+                            // --- Математика для позиционирования и вращения ---
+                            Vector2 parentPos = parentNode.GetComponent<RectTransform>().anchoredPosition;
+                            Vector2 childPos = childNode.GetComponent<RectTransform>().anchoredPosition;
+                            Vector2 direction = (childPos - parentPos).normalized;
+                            float distance = Vector2.Distance(parentPos, childPos);
 
-                        // --- СОХРАНЯЕМ ЛИНИЮ В СПИСОК ---
-                        _connectionLines.Add(lineImage);
-                    }
-                }
-            }
-        }
+                            lineRect.anchoredPosition = parentPos;
+                            lineRect.sizeDelta = new Vector2(distance, lineRect.sizeDelta.y);
+                            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+                            lineRect.rotation = Quaternion.Euler(0, 0, angle);
 
-        // После создания всех линий, один раз обновляем их цвет
-        UpdateLineVisuals();
-    }
-
-    private void UpdateLineVisuals()
-    {
-        SaveData saveData = SaveManager.LoadGame();
-        int lineIndex = 0; // Нам нужен счетчик, чтобы сопоставить линии с навыками
-
-        foreach (PassiveSkillData skillData in skillTreeAsset.allSkills)
-        {
-            if (skillData.prerequisites != null)
-            {
-                foreach (PassiveSkillData prerequisiteData in skillData.prerequisites)
-                {
-                    // Убедимся, что индекс не выходит за пределы списка
-                    if (lineIndex < _connectionLines.Count)
-                    {
-                        bool isParentUnlocked = saveData.unlockedPassiveIDs.Contains(prerequisiteData.skillID);
-                        bool isChildUnlocked = saveData.unlockedPassiveIDs.Contains(skillData.skillID);
-
-                        // Раскрашиваем соответствующую линию
-                        _connectionLines[lineIndex].color = (isParentUnlocked && isChildUnlocked) ? unlockedLineColor : lockedLineColor;
-                        lineIndex++;
+                            // Просто добавляем созданную линию в наш список для последующего управления
+                            _connectionLines.Add(lineImage);
+                        }
                     }
                 }
             }
         }
     }
+
 
     public void UpdateAllNodeVisuals()
     {
-        SaveData saveData = SaveManager.LoadGame(); // Получаем актуальные данные сохранения
+        // Возвращаем загрузку данных сюда. Этот компонент должен быть автономен.
+        SaveData saveData = SaveManager.LoadGame();
+        if (saveData == null) return;
 
         foreach (var entry in _uiNodes)
         {
@@ -203,41 +186,87 @@ public class PassiveTree_UI_Manager : MonoBehaviour
             PassiveSkillData skillData = skillTreeAsset.allSkills.Find(s => s.skillID == skillID);
 
             bool isUnlocked = saveData.unlockedPassiveIDs.Contains(skillID);
-            bool canBeUnlocked = true; // По умолчанию считаем, что можно изучить
 
-            // Проверяем, изучены ли все "родители"
-            foreach (var prerequisite in skillData.prerequisites)
+            // Временно вернем проверку сюда, чтобы не зависеть от GameManager
+            bool canBeUnlocked = true;
+            if (skillData.prerequisiteGroups != null && skillData.prerequisiteGroups.Count > 0)
             {
-                if (!saveData.unlockedPassiveIDs.Contains(prerequisite.skillID))
+                // Эта логика не полная (не учитывает И/ИЛИ), но для визуала ее пока хватит.
+                // Она просто проверяет, изучен ли ХОТЯ БЫ ОДИН из всех возможных родителей.
+                bool anyPrerequisiteMet = skillData.prerequisiteGroups
+                    .SelectMany(group => group.requiredSkills)
+                    .Any(prereq => saveData.unlockedPassiveIDs.Contains(prereq.skillID));
+
+                if (!anyPrerequisiteMet)
                 {
                     canBeUnlocked = false;
-                    break;
                 }
             }
 
-            // Если навык уже изучен, он не может быть "доступен для изучения"
             if (isUnlocked)
             {
                 canBeUnlocked = false;
             }
 
+            // Логика цвета
             Color targetColor;
-            if (isUnlocked)
-            {
-                targetColor = unlockedNodeColor;
-            }
-            else if (canBeUnlocked)
-            {
-                targetColor = canBeUnlockedNodeColor;
-            }
-            else
-            {
-                targetColor = lockedNodeColor;
-            }
+            if (isUnlocked) targetColor = unlockedNodeColor;
+            else if (canBeUnlocked) targetColor = canBeUnlockedNodeColor;
+            else targetColor = lockedNodeColor;
 
             uiNode.UpdateVisuals(targetColor);
         }
     }
+
+    
+
+    private void UpdateLineVisuals()
+    {
+        // Возвращаем загрузку данных сюда.
+        SaveData saveData = SaveManager.LoadGame();
+        if (saveData == null) return;
+
+        int lineIndex = 0;
+
+        // Итерируем в том же порядке, в котором создавали линии
+        foreach (PassiveSkillData skillData in skillTreeAsset.allSkills)
+        {
+            if (skillData.prerequisiteGroups != null)
+            {
+                foreach (PrerequisiteGroup group in skillData.prerequisiteGroups)
+                {
+                    foreach (PassiveSkillData prerequisiteData in group.requiredSkills)
+                    {
+                        if (lineIndex < _connectionLines.Count)
+                        {
+                            Image currentLine = _connectionLines[lineIndex];
+
+                            bool isParentUnlocked = saveData.unlockedPassiveIDs.Contains(prerequisiteData.skillID);
+                            bool isChildUnlocked = saveData.unlockedPassiveIDs.Contains(skillData.skillID);
+
+                            // Используем строгую и однозначную логику раскраски
+                            if (isParentUnlocked && isChildUnlocked)
+                            {
+                                currentLine.color = unlockedLineColor;
+                            }
+                            else if (isParentUnlocked && !isChildUnlocked)
+                            {
+                                currentLine.color = canBeUnlockedLineColor;
+                            }
+                            else
+                            {
+                                currentLine.color = lockedLineColor;
+                            }
+
+                            lineIndex++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
 
     // Этот метод вызывается из дочернего узла при клике
     public void OnSkillNodeClicked(PassiveSkillData clickedSkill)

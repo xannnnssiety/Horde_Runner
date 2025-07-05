@@ -14,13 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   skillID: ProjSpeed_1
   skillName: ProjSpeed
-  description: "\u0423\u0432\u0435\u043B\u0438\u0447\u0438\u0432\u0430\u0435\u0442
-    \u0441\u043A\u043E\u0440\u043E\u0441\u0442\u044C \u0441\u043D\u0430\u0440\u044F\u0434\u043E\u0432"
+  description: "\u0441\u043A\u043E\u0440\u043E\u0441\u0442\u044C \u0441\u043D\u0430\u0440\u044F\u0434\u043E\u0432
+    +10%"
   icon: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   cost: 1
   skillTier: 0
-  gridPosition: {x: 0, y: 0}
-  prerequisites: []
+  gridPosition: {x: 0, y: 1}
+  groupLogicType: 0
+  prerequisiteGroups:
+  - logicType: 0
+    requiredSkills:
+    - {fileID: 11400000, guid: d49bb9179b3277e428d79caad310f063, type: 2}
   modifiers:
   - Stat: 9
     Value: 10

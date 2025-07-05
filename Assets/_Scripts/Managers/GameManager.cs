@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.Linq;
 
 public class GameManager : MonoBehaviour
 {
@@ -88,8 +89,14 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        if (!ArePrerequisitesMet(newSkill))
+        {
+            Debug.Log($"Не выполнены требования для '{newSkill.skillName}'.");
+            return;
+        }
+
         // --- ПРОВЕРКА 3: Изучены ли все предыдущие навыки? ---
-        foreach (var prerequisite in newSkill.prerequisites)
+/*        foreach (var prerequisite in newSkill.prerequisites)
         {
             if (!_saveData.unlockedPassiveIDs.Contains(prerequisite.skillID))
             {
@@ -97,7 +104,7 @@ public class GameManager : MonoBehaviour
                 // TODO: Показать игроку сообщение об ошибке
                 return;
             }
-        }
+        }*/
 
         // --- ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ, СОВЕРШАЕМ ПОКУПКУ ---
         Debug.Log($"<color=green>Изучен новый навык: {newSkill.skillName}</color>");
@@ -122,6 +129,54 @@ public class GameManager : MonoBehaviour
         SaveProgress();
 
         // 6. UI обновится автоматически, так как его вызывает PassiveTree_UI_Manager
+    }
+
+    private bool ArePrerequisitesMet(PassiveSkillData skill)
+    {
+        // Если групп требований нет, то они выполнены
+        if (skill.prerequisiteGroups == null || skill.prerequisiteGroups.Count == 0)
+        {
+            return true;
+        }
+
+        // Проверяем логику МЕЖДУ группами
+        if (skill.groupLogicType == PassiveSkillData.InterGroupLogicType.AND)
+        {
+            // Должны быть выполнены ВСЕ группы
+            return skill.prerequisiteGroups.All(group => IsGroupMet(group));
+        }
+        else // OR
+        {
+            // Должна быть выполнена ХОТЯ БЫ ОДНА группа
+            return skill.prerequisiteGroups.Any(group => IsGroupMet(group));
+        }
+    }
+
+    private bool IsGroupMet(PrerequisiteGroup group)
+    {
+        // Если в группе нет навыков, она считается выполненной
+        if (group.requiredSkills == null || group.requiredSkills.Count == 0)
+        {
+            return true;
+        }
+
+        // Проверяем логику ВНУТРИ группы
+        if (group.logicType == PrerequisiteGroup.GroupLogicType.AND)
+        {
+            // Должны быть изучены ВСЕ навыки в этой группе
+            return group.requiredSkills.All(skill => _saveData.unlockedPassiveIDs.Contains(skill.skillID));
+        }
+        else // OR
+        {
+            // Должен быть изучен ХОТЯ БЫ ОДИН навык в этой группе
+            return group.requiredSkills.Any(skill => _saveData.unlockedPassiveIDs.Contains(skill.skillID));
+        }
+    }
+
+    public bool CanUnlockPassive(PassiveSkillData skill)
+    {
+        // Просто вызываем наш внутренний метод проверки
+        return ArePrerequisitesMet(skill);
     }
 
     public void ResetAllProgress()

@@ -10,23 +10,24 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 54d8297b25781a14ea040ae6858181c4, type: 3}
-  m_Name: ps_Damage_1
+  m_Name: ps_Amount_1
   m_EditorClassIdentifier: 
-  skillID: Damage_1
-  skillName: Damage
-  description: Damage +5%
+  skillID: Amount_1
+  skillName: Amount
+  description: "+1 \u043A\u043E\u043B-\u0432\u043E \u0441\u043A\u0438\u043B\u043B\u043E\u0432"
   icon: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   cost: 1
-  skillTier: 0
-  gridPosition: {x: -0.75, y: 0.75}
+  skillTier: 1
+  gridPosition: {x: -3, y: 0.5}
   groupLogicType: 0
   prerequisiteGroups:
-  - logicType: 0
+  - logicType: 1
     requiredSkills:
-    - {fileID: 11400000, guid: d49bb9179b3277e428d79caad310f063, type: 2}
+    - {fileID: 11400000, guid: 0c85ec434a16dcf478b7f3fa8b6ff9a9, type: 2}
+    - {fileID: 11400000, guid: 75f72fe745af29746926cfa0f716ec45, type: 2}
   modifiers:
-  - Stat: 4
-    Value: 5
-    Type: 1
-    AppliesToTags: 11
+  - Stat: 8
+    Value: 1
+    Type: 0
+    AppliesToTags: -1
   uniqueBehaviourPrefab: {fileID: 0}

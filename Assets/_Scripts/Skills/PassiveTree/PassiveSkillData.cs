@@ -30,8 +30,15 @@ public class PassiveSkillData : ScriptableObject
     [Tooltip("Виртуальные координаты для отображения в UI-сетке")]
     public Vector2 gridPosition;
 
-    [Tooltip("Список навыков, которые должны быть изучены, чтобы разблокировать этот")]
-    public List<PassiveSkillData> prerequisites;
+    public enum InterGroupLogicType { AND, OR }
+
+    [Header("Требования для изучения")]
+    [Tooltip("AND: должны быть выполнены ВСЕ группы требований. OR: должна быть выполнена ХОТЯ БЫ ОДНА группа.")]
+    public InterGroupLogicType groupLogicType = InterGroupLogicType.AND;
+
+    [Tooltip("Список групп требований. Каждая группа имеет свою внутреннюю логику.")]
+    public List<PrerequisiteGroup> prerequisiteGroups;
+    /*public List<PassiveSkillData> prerequisites;*/
 
     [Header("Игровые эффекты")]
     [Tooltip("Список всех модификаторов, которые дает этот навык")]
