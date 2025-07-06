@@ -16,14 +16,8 @@ MonoBehaviour:
   skillName: Health
   description: "+20% \u0445\u043F"
   icon: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
-  cost: 1
-  skillTier: 0
-  gridPosition: {x: 0.75, y: 0.75}
-  groupLogicType: 0
-  prerequisiteGroups:
-  - logicType: 0
-    requiredSkills:
-    - {fileID: 11400000, guid: d49bb9179b3277e428d79caad310f063, type: 2}
+  baseCost: 111
+  maxPurchaseCount: 5
   modifiers:
   - Stat: 0
     Value: 20

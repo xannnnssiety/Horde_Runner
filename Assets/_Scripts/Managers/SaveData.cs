@@ -1,21 +1,27 @@
 using System.Collections.Generic;
+using UnityEngine;
 
-// Атрибут [System.Serializable] ОБЯЗАТЕЛЕН.
-// Он говорит Unity, что объекты этого класса можно превращать в JSON и обратно.
 [System.Serializable]
 public class SaveData
 {
-    // Валюта для покупки пассивных умений
+    [Tooltip("Текущее количество валюты")]
     public int currency;
 
-    // Список УНИКАЛЬНЫХ ID изученных навыков.
-    // Мы храним не весь навык, а только его ID, что очень эффективно.
-    public List<string> unlockedPassiveIDs;
+    [Tooltip("Общее количество покупок, влияет на инфляцию цен")]
+    public int totalPurchasesMade;
 
-    // Конструктор по умолчанию. Создает "чистое" сохранение для нового игрока.
+    public int totalCurrencySpent;
+
+    // Используем словарь для хранения уровня прокачки каждого навыка
+    // Ключ: skillID, Значение: текущий уровень (сколько раз купили)
+    public Dictionary<string, int> unlockedPassives;
+
+    // Конструктор для нового сохранения
     public SaveData()
     {
         currency = 0;
-        unlockedPassiveIDs = new List<string>();
+        totalPurchasesMade = 0;
+        totalCurrencySpent = 0;
+        unlockedPassives = new Dictionary<string, int>();
     }
 }

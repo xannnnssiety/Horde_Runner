@@ -14,12 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   allSkills:
   - {fileID: 11400000, guid: b42ff72d0f832d64ab28d07f2a211493, type: 2}
-  - {fileID: 11400000, guid: e280539fc3494d94a8d7f21be08dcd6f, type: 2}
-  - {fileID: 11400000, guid: 7ed71b7807f9d9b4bb7be01377ab30ea, type: 2}
-  - {fileID: 11400000, guid: 0e1566b352ace6940ac52df02db9f618, type: 2}
   - {fileID: 11400000, guid: 299bfeaa33b31cc46aaff0add9ecc0e6, type: 2}
   - {fileID: 11400000, guid: 75f72fe745af29746926cfa0f716ec45, type: 2}
-  - {fileID: 11400000, guid: d49bb9179b3277e428d79caad310f063, type: 2}
   - {fileID: 11400000, guid: e557e6ea512ab8748a5e02f26924872f, type: 2}
   - {fileID: 11400000, guid: 0c85ec434a16dcf478b7f3fa8b6ff9a9, type: 2}
   - {fileID: 11400000, guid: 3fc0fb036a28b904aa240cd0fa13d640, type: 2}

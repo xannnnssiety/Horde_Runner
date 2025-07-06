@@ -65,6 +65,19 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
+    public void ResetToDefaults()
+    {
+        // Проходим по каждому стату в словаре
+        foreach (var statEntry in _stats)
+        {
+            // Вызываем у него метод очистки модификаторов
+            statEntry.Value.ClearModifiers();
+            // Сообщаем всем, что стат изменился (вернулся к базовому значению)
+            OnStatChanged?.Invoke(statEntry.Key, statEntry.Value.Value);
+        }
+        Debug.Log("Все статы игрока сброшены до базовых значений.");
+    }
+
     /// <summary>
     /// Снимает все модификаторы от пассивного навыка (полезно для сброса).
     /// </summary>

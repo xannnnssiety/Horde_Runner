@@ -1,49 +1,68 @@
 using UnityEngine;
 using System.IO;
+using System.Collections.Generic;
+using System.Linq;
 
-// Статический класс - его не нужно создавать или вешать на объект.
-// Его методы можно вызывать напрямую: SaveManager.SaveGame(...)
 public static class SaveManager
 {
-    // Путь к файлу сохранения. Application.persistentDataPath - это специальная папка
-    // в системе, предназначенная для хранения данных игры (безопасна и не удаляется при обновлении).
+    // Вспомогательный класс для сериализации словаря. Он не должен быть в отдельном файле.
+    [System.Serializable]
+    private class SerializableSaveData
+    {
+        public int currency;
+        public int totalPurchasesMade;
+        public int totalCurrencySpent;
+        public List<string> unlockedPassiveKeys;
+        public List<int> unlockedPassiveValues;
+    }
+
     private static string saveFilePath = Path.Combine(Application.persistentDataPath, "savedata.json");
 
-    /// <summary>
-    /// Сохраняет данные игры в JSON файл.
-    /// </summary>
-    /// <param name="data">Объект SaveData для сохранения.</param>
     public static void SaveGame(SaveData data)
     {
-        // Превращаем объект в строку формата JSON
-        string json = JsonUtility.ToJson(data, true); // true для красивого форматирования
+        // 1. Конвертируем словарь в списки
+        SerializableSaveData serializableData = new SerializableSaveData
+        {
+            currency = data.currency,
+            totalPurchasesMade = data.totalPurchasesMade,
+            totalCurrencySpent = data.totalCurrencySpent,
+            unlockedPassiveKeys = data.unlockedPassives.Keys.ToList(),
+            unlockedPassiveValues = data.unlockedPassives.Values.ToList()
+        };
 
-        // Записываем строку в файл
+        // 2. Сериализуем и сохраняем
+        string json = JsonUtility.ToJson(serializableData, true);
         File.WriteAllText(saveFilePath, json);
         Debug.Log($"Игра сохранена в: {saveFilePath}");
     }
 
-    /// <summary>
-    /// Загружает данные игры из JSON файла.
-    /// </summary>
-    /// <returns>Загруженный объект SaveData или новый, если файл не найден.</returns>
     public static SaveData LoadGame()
     {
-        // Проверяем, существует ли файл сохранения
         if (File.Exists(saveFilePath))
         {
-            // Читаем весь текст из файла
             string json = File.ReadAllText(saveFilePath);
+            SerializableSaveData serializableData = JsonUtility.FromJson<SerializableSaveData>(json);
 
-            // Превращаем JSON строку обратно в объект SaveData
-            SaveData data = JsonUtility.FromJson<SaveData>(json);
+            // 1. Создаем новый объект SaveData
+            SaveData data = new SaveData
+            {
+                currency = serializableData.currency,
+                totalPurchasesMade = serializableData.totalPurchasesMade,
+                totalCurrencySpent = serializableData.totalCurrencySpent,
+                unlockedPassives = new Dictionary<string, int>()
+            };
+
+            // 2. Собираем словарь обратно из списков
+            for (int i = 0; i < serializableData.unlockedPassiveKeys.Count; i++)
+            {
+                data.unlockedPassives.Add(serializableData.unlockedPassiveKeys[i], serializableData.unlockedPassiveValues[i]);
+            }
 
             Debug.Log("Сохранение успешно загружено.");
             return data;
         }
         else
         {
-            // Если файла нет, это первый запуск. Создаем новые данные.
             Debug.LogWarning("Файл сохранения не найден. Создано новое сохранение.");
             return new SaveData();
         }

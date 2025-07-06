@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// Атрибут CreateAssetMenu позволяет создавать экземпляры этого объекта
-// прямо в редакторе Unity через меню Create -> ...
 [CreateAssetMenu(fileName = "NewPassiveSkill", menuName = "Skills/Passive Skill Data")]
 public class PassiveSkillData : ScriptableObject
 {
@@ -14,37 +12,24 @@ public class PassiveSkillData : ScriptableObject
     public string skillName;
 
     [Tooltip("Подробное описание, которое видит игрок")]
-    [TextArea(3, 5)] // Делает текстовое поле в инспекторе больше
+    [TextArea(3, 5)]
     public string description;
 
     [Tooltip("Иконка навыка")]
     public Sprite icon;
 
-    [Header("Настройки в дереве")]
-    [Tooltip("Стоимость разблокировки в очках пассивок")]
-    public int cost = 1;
+    [Header("Игровая логика")]
+    [Tooltip("Базовая стоимость первой покупки")]
+    public int baseCost = 1;
 
-    [Tooltip("Тир/размер навыка в дереве")]
-    public PassiveSkillTier skillTier = PassiveSkillTier.Normal;
-
-    [Tooltip("Виртуальные координаты для отображения в UI-сетке")]
-    public Vector2 gridPosition;
-
-    public enum InterGroupLogicType { AND, OR }
-
-    [Header("Требования для изучения")]
-    [Tooltip("AND: должны быть выполнены ВСЕ группы требований. OR: должна быть выполнена ХОТЯ БЫ ОДНА группа.")]
-    public InterGroupLogicType groupLogicType = InterGroupLogicType.AND;
-
-    [Tooltip("Список групп требований. Каждая группа имеет свою внутреннюю логику.")]
-    public List<PrerequisiteGroup> prerequisiteGroups;
-    /*public List<PassiveSkillData> prerequisites;*/
+    [Tooltip("Максимальное количество раз, которое можно купить этот навык")]
+    public int maxPurchaseCount = 1;
 
     [Header("Игровые эффекты")]
-    [Tooltip("Список всех модификаторов, которые дает этот навык")]
+    [Tooltip("Список всех модификаторов, которые дает этот навык ЗА ОДНУ ПОКУПКУ")]
     public List<StatModifier> modifiers;
 
     [Header("Уникальное поведение (опционально)")]
-    [Tooltip("Префаб с уникальной логикой (например, урон за киллы)")]
+    [Tooltip("Префаб с уникальной логикой. Будет создан только при ПЕРВОЙ покупке.")]
     public GameObject uniqueBehaviourPrefab;
 }

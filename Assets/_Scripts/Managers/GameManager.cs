@@ -1,197 +1,187 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using System.Linq;
+using System.Linq; // Убедитесь, что этот using есть
 
 public class GameManager : MonoBehaviour
 {
-    // Ссылки на ключевые компоненты
-    public PlayerStats playerStats; // Перетащите сюда объект StatsAndSkills
-    public PassiveSkillTree passiveSkillTree; // Перетащите сюда ассет MainPassiveTree
+    [Header("Ссылки")]
+    public PassiveShop_UI_Manager shopUIManager;
+    [Tooltip("Ссылка на компонент PlayerStats. Должен быть на сцене.")]
+    public PlayerStats playerStats;
+    [Tooltip("Ссылка на ассет, хранящий все пассивные навыки.")]
+    public PassiveSkillTree passiveSkillTree;
+
+    [Header("Настройки экономики")]
+    [Tooltip("Процент, на который увеличивается базовая цена после каждой покупки. 0.1 = 10%")]
+    [Range(0f, 1f)]
+    public float priceInflationRate = 0.1f;
 
     // Хранилище текущего прогресса
-    private SaveData _saveData;
+    public SaveData CurrentSaveData { get; private set; }
 
-    void Start()
-    {
+    void Awake()
+    {   
+        
+        // Загружаем прогресс в Awake, чтобы он был доступен другим скриптам в их Start()
         LoadProgress();
-    }
-
-    private void Update()
-    {
-        // Отладочная функция: сброс прогресса по нажатию на R
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            ResetAllProgress();
-        }
     }
 
     public void LoadProgress()
     {
-        // Загружаем данные из файла
-        _saveData = SaveManager.LoadGame();
-        _saveData.currency = 100; // Временно устанавливаем валюту для теста
-        // Применяем загруженный прогресс
-        ApplyLoadedPassives();
-
-        // TODO: Обновить UI с количеством валюты
-        // UIManager.UpdateCurrency(_saveData.currency);
+        
+        CurrentSaveData = SaveManager.LoadGame();
+        CurrentSaveData.currency = 100000; // Временно устанавливаем огромное количество валюты
+        ApplyAllLoadedPassives();
     }
 
     public void SaveProgress()
     {
-        // Здесь мы могли бы обновить данные перед сохранением,
-        // например, _saveData.currency = player.Currency;
-
-        SaveManager.SaveGame(_saveData);
+        SaveManager.SaveGame(CurrentSaveData);
     }
 
-    private void ApplyLoadedPassives()
+    private void ApplyAllLoadedPassives()
     {
-        if (playerStats == null || passiveSkillTree == null)
-        {
-            Debug.LogError("Ссылки на PlayerStats или PassiveSkillTree не установлены в GameManager!");
-            return;
-        }
+        if (playerStats == null || passiveSkillTree == null) return;
 
-        // Проходим по всем ID изученных навыков из нашего сохранения
-        foreach (string skillID in _saveData.unlockedPassiveIDs)
+        // Проходим по словарю изученных навыков
+        foreach (var unlockedPassive in CurrentSaveData.unlockedPassives)
         {
-            // Ищем соответствующий навык в нашей "базе данных"
+            string skillID = unlockedPassive.Key;
+            int purchaseCount = unlockedPassive.Value;
+
             PassiveSkillData skillToApply = passiveSkillTree.allSkills.Find(s => s.skillID == skillID);
 
             if (skillToApply != null)
             {
-                // Если навык найден, применяем его эффекты к статам игрока
-                playerStats.ApplyPassive(skillToApply);
-            }
-            else
-            {
-                Debug.LogWarning($"Пассивный навык с ID '{skillID}' не найден в дереве!");
+                // Применяем модификаторы столько раз, сколько был куплен навык
+                for (int i = 0; i < purchaseCount; i++)
+                {
+                    playerStats.ApplyPassive(skillToApply);
+                }
+
+                // Уникальное поведение активируем только один раз
+                if (purchaseCount > 0 && skillToApply.uniqueBehaviourPrefab != null)
+                {
+                    Instantiate(skillToApply.uniqueBehaviourPrefab, playerStats.transform);
+                }
             }
         }
     }
 
-    // Этот метод будет вызываться из UI, когда игрок покупает новый навык
+    /// <summary>
+    /// Логика покупки или улучшения пассивного навыка.
+    /// </summary>
     public void UnlockPassive(PassiveSkillData newSkill)
     {
-        // --- ПРОВЕРКА 1: Не изучен ли навык уже? ---
-        if (_saveData.unlockedPassiveIDs.Contains(newSkill.skillID))
+        // Получаем текущий уровень прокачки навыка
+        CurrentSaveData.unlockedPassives.TryGetValue(newSkill.skillID, out int currentLevel);
+
+        // ПРОВЕРКА 1: Не достигнут ли максимальный уровень?
+        if (currentLevel >= newSkill.maxPurchaseCount)
         {
-            Debug.Log($"Навык '{newSkill.skillName}' уже изучен.");
+            Debug.Log($"Навык '{newSkill.skillName}' уже прокачан до максимума.");
             return;
         }
 
-        // --- ПРОВЕРКА 2: Хватает ли валюты? ---
-        if (_saveData.currency < newSkill.cost)
+        // ПРОВЕРКА 2: Хватает ли валюты?
+        int currentCost = GetCurrentSkillCost(newSkill);
+        if (CurrentSaveData.currency < currentCost)
         {
-            Debug.Log($"Недостаточно валюты для изучения '{newSkill.skillName}'. Нужно: {newSkill.cost}, есть: {_saveData.currency}");
-            // TODO: Показать игроку сообщение об ошибке
+            Debug.Log($"Недостаточно валюты для '{newSkill.skillName}'. Нужно: {currentCost}, есть: {CurrentSaveData.currency}");
             return;
         }
-
-        if (!ArePrerequisitesMet(newSkill))
-        {
-            Debug.Log($"Не выполнены требования для '{newSkill.skillName}'.");
-            return;
-        }
-
-        // --- ПРОВЕРКА 3: Изучены ли все предыдущие навыки? ---
-/*        foreach (var prerequisite in newSkill.prerequisites)
-        {
-            if (!_saveData.unlockedPassiveIDs.Contains(prerequisite.skillID))
-            {
-                Debug.Log($"Не выполнены требования для '{newSkill.skillName}'. Нужно изучить: '{prerequisite.skillName}'");
-                // TODO: Показать игроку сообщение об ошибке
-                return;
-            }
-        }*/
 
         // --- ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ, СОВЕРШАЕМ ПОКУПКУ ---
-        Debug.Log($"<color=green>Изучен новый навык: {newSkill.skillName}</color>");
+        Debug.Log($"<color=green>Улучшен навык: {newSkill.skillName} до уровня {currentLevel + 1}</color>");
+
+        
 
         // 1. Списываем валюту
-        _saveData.currency -= newSkill.cost;
+        CurrentSaveData.currency -= currentCost;
 
-        // 2. Добавляем ID в список изученных
-        _saveData.unlockedPassiveIDs.Add(newSkill.skillID);
+        // 2. ДОБАВЛЯЕМ ПОТРАЧЕННУЮ СУММУ В ОБЩИЙ КОТЕЛ
+        CurrentSaveData.totalCurrencySpent += currentCost;
 
-        // 3. Применяем эффекты к статам персонажа
+        // 2. Увеличиваем общий счетчик покупок для инфляции
+        CurrentSaveData.totalPurchasesMade++;
+
+        // 3. Обновляем уровень навыка в словаре
+        if (currentLevel > 0)
+        {
+            CurrentSaveData.unlockedPassives[newSkill.skillID]++;
+        }
+        else // Если это первая покупка, добавляем запись в словарь
+        {
+            CurrentSaveData.unlockedPassives.Add(newSkill.skillID, 1);
+            // Активируем уникальное поведение только при первой покупке
+            if (newSkill.uniqueBehaviourPrefab != null)
+            {
+                Instantiate(newSkill.uniqueBehaviourPrefab, playerStats.transform);
+            }
+        }
+
+        // 4. Применяем эффекты к статам персонажа
         playerStats.ApplyPassive(newSkill);
 
-        // 4. Активируем уникальное поведение, если оно есть
-        if (newSkill.uniqueBehaviourPrefab != null)
-        {
-            // Создаем экземпляр префаба и делаем его дочерним к объекту со статами
-            Instantiate(newSkill.uniqueBehaviourPrefab, playerStats.transform);
-        }
-
-        // 5. Сохраняем игру после каждого важного изменения
+        // 5. Сохраняем игру
         SaveProgress();
-
-        // 6. UI обновится автоматически, так как его вызывает PassiveTree_UI_Manager
     }
 
-    private bool ArePrerequisitesMet(PassiveSkillData skill)
+    /// <summary>
+    /// Вычисляет текущую стоимость навыка с учетом инфляции.
+    /// Этот метод будет использоваться UI для отображения цены.
+    /// </summary>
+    public int GetCurrentSkillCost(PassiveSkillData skill)
     {
-        // Если групп требований нет, то они выполнены
-        if (skill.prerequisiteGroups == null || skill.prerequisiteGroups.Count == 0)
-        {
-            return true;
-        }
-
-        // Проверяем логику МЕЖДУ группами
-        if (skill.groupLogicType == PassiveSkillData.InterGroupLogicType.AND)
-        {
-            // Должны быть выполнены ВСЕ группы
-            return skill.prerequisiteGroups.All(group => IsGroupMet(group));
-        }
-        else // OR
-        {
-            // Должна быть выполнена ХОТЯ БЫ ОДНА группа
-            return skill.prerequisiteGroups.Any(group => IsGroupMet(group));
-        }
+        float costMultiplier = Mathf.Pow(1f + priceInflationRate, CurrentSaveData.totalPurchasesMade);
+        int currentCost = Mathf.CeilToInt(skill.baseCost * costMultiplier);
+        return currentCost;
     }
 
-    private bool IsGroupMet(PrerequisiteGroup group)
-    {
-        // Если в группе нет навыков, она считается выполненной
-        if (group.requiredSkills == null || group.requiredSkills.Count == 0)
-        {
-            return true;
-        }
-
-        // Проверяем логику ВНУТРИ группы
-        if (group.logicType == PrerequisiteGroup.GroupLogicType.AND)
-        {
-            // Должны быть изучены ВСЕ навыки в этой группе
-            return group.requiredSkills.All(skill => _saveData.unlockedPassiveIDs.Contains(skill.skillID));
-        }
-        else // OR
-        {
-            // Должен быть изучен ХОТЯ БЫ ОДИН навык в этой группе
-            return group.requiredSkills.Any(skill => _saveData.unlockedPassiveIDs.Contains(skill.skillID));
-        }
-    }
-
-    public bool CanUnlockPassive(PassiveSkillData skill)
-    {
-        // Просто вызываем наш внутренний метод проверки
-        return ArePrerequisitesMet(skill);
-    }
-
+    // Отладочная функция сброса
     public void ResetAllProgress()
     {
         Debug.LogWarning("--- ПРОГРЕСС ПОЛНОСТЬЮ СБРОШЕН! ---");
+        SaveManager.SaveGame(new SaveData());
+        UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
+    }
 
-        // 1. Создаем абсолютно новый, пустой объект SaveData
-        SaveData freshSaveData = new SaveData();
+    public void RefundAllPassives()
+    {
+        if (CurrentSaveData == null || passiveSkillTree == null) return;
 
-        // 2. Сохраняем эти пустые данные в файл, затирая старое сохранение
-        SaveManager.SaveGame(freshSaveData);
+        Debug.LogWarning("--- СБРОС ВСЕХ ПАССИВНЫХ НАВЫКОВ ---");
 
-        // 3. Перезагружаем текущую сцену, чтобы все изменения применились.
-        // Это самый надежный способ убедиться, что все системы (PlayerStats, UI)
-        // начнут работать с чистого листа.
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        int totalRefundAmount = CurrentSaveData.totalCurrencySpent;
+        
+
+
+
+        // Возвращаем валюту
+        CurrentSaveData.currency += totalRefundAmount;
+        Debug.Log($"Возвращено {totalRefundAmount} валюты. Текущий баланс: {CurrentSaveData.currency}");
+
+        // Очищаем данные
+        CurrentSaveData.unlockedPassives.Clear();
+        CurrentSaveData.totalPurchasesMade = 0;
+        CurrentSaveData.totalCurrencySpent = 0;
+
+        // Сбрасываем статы персонажа до базовых
+        if (playerStats != null)
+        {
+            playerStats.ResetToDefaults();
+        }
+
+        // Обновляем UI магазина, чтобы он показал сброшенный прогресс
+        if (shopUIManager != null)
+        {
+            shopUIManager.UpdateAllPerkVisuals();
+        }
+        else
+        {
+            Debug.LogWarning("Ссылка на Shop UI Manager не установлена в GameManager, UI не будет обновлен после сброса.");
+        }
+
+        // Сохраняем "чистые" данные
+        SaveProgress();
     }
 }

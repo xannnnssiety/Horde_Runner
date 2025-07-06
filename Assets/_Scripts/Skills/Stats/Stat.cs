@@ -28,6 +28,12 @@ public class Stat
         CalculateFinalValue();
     }
 
+    public void ClearModifiers()
+    {
+        _modifiers.Clear();
+        CalculateFinalValue(); // Пересчитываем значение, которое теперь будет равно базовому
+    }
+
     private void CalculateFinalValue()
     {
         float finalValue = BaseValue;
