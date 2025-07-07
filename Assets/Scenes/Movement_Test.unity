@@ -319,7 +319,7 @@ MonoBehaviour:
   shopUIManager: {fileID: 543561678}
   playerStats: {fileID: 1918504332}
   passiveSkillTree: {fileID: 11400000, guid: e905994e5715e6f40a2be41762f38c1e, type: 2}
-  priceInflationRate: 0
+  priceInflationRate: 0.05
 --- !u!4 &63767939
 Transform:
   m_ObjectHideFlags: 0
