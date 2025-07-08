@@ -1,5 +1,6 @@
 using UnityEngine;
-using System.Linq; // Убедитесь, что этот using есть
+using System.Linq;
+using System.Collections.Generic; // --- ИЗМЕНЕНИЕ --- Добавлено для использования List<>
 
 public class GameManager : MonoBehaviour
 {
@@ -15,21 +16,33 @@ public class GameManager : MonoBehaviour
     [Range(0f, 1f)]
     public float priceInflationRate = 0.1f;
 
-    // Хранилище текущего прогресса
     public SaveData CurrentSaveData { get; private set; }
 
+    // --- ИЗМЕНЕНИЕ ---
+    // Список для отслеживания всех созданных префабов с уникальным поведением.
+    private List<GameObject> _activeUniqueBehaviours = new List<GameObject>();
+
     void Awake()
-    {   
-        
-        // Загружаем прогресс в Awake, чтобы он был доступен другим скриптам в их Start()
+    {
         LoadProgress();
+    }
+
+    // --- ИЗМЕНЕНИЕ ---
+    // Добавлена логика подсчета убийств.
+    private void OnEnable()
+    {
+        GameEvents.OnEnemyDied += HandleEnemyDied;
+    }
+
+    private void OnDisable()
+    {
+        GameEvents.OnEnemyDied -= HandleEnemyDied;
     }
 
     public void LoadProgress()
     {
-        
         CurrentSaveData = SaveManager.LoadGame();
-        CurrentSaveData.currency = 100000; // Временно устанавливаем огромное количество валюты
+        CurrentSaveData.currency = 100000;
         ApplyAllLoadedPassives();
     }
 
@@ -42,47 +55,45 @@ public class GameManager : MonoBehaviour
     {
         if (playerStats == null || passiveSkillTree == null) return;
 
-        // Проходим по словарю изученных навыков
+        // --- ИЗМЕНЕНИЕ ---
+        // Перед применением всех перков (например, при загрузке игры)
+        // уничтожаем все старые объекты, чтобы избежать их дублирования.
+        DestroyAllUniqueBehaviours();
+
         foreach (var unlockedPassive in CurrentSaveData.unlockedPassives)
         {
             string skillID = unlockedPassive.Key;
             int purchaseCount = unlockedPassive.Value;
-
             PassiveSkillData skillToApply = passiveSkillTree.allSkills.Find(s => s.skillID == skillID);
 
             if (skillToApply != null)
             {
-                // Применяем модификаторы столько раз, сколько был куплен навык
                 for (int i = 0; i < purchaseCount; i++)
                 {
                     playerStats.ApplyPassive(skillToApply);
                 }
 
-                // Уникальное поведение активируем только один раз
                 if (purchaseCount > 0 && skillToApply.uniqueBehaviourPrefab != null)
                 {
-                    Instantiate(skillToApply.uniqueBehaviourPrefab, playerStats.transform);
+                    // --- ИЗМЕНЕНИЕ ---
+                    // Создаем объект и СРАЗУ ЖЕ добавляем его в список для отслеживания.
+                    GameObject instance = Instantiate(skillToApply.uniqueBehaviourPrefab, playerStats.transform);
+                    _activeUniqueBehaviours.Add(instance);
                 }
             }
         }
     }
 
-    /// <summary>
-    /// Логика покупки или улучшения пассивного навыка.
-    /// </summary>
     public void UnlockPassive(PassiveSkillData newSkill)
     {
-        // Получаем текущий уровень прокачки навыка
         CurrentSaveData.unlockedPassives.TryGetValue(newSkill.skillID, out int currentLevel);
 
-        // ПРОВЕРКА 1: Не достигнут ли максимальный уровень?
         if (currentLevel >= newSkill.maxPurchaseCount)
         {
             Debug.Log($"Навык '{newSkill.skillName}' уже прокачан до максимума.");
             return;
         }
 
-        // ПРОВЕРКА 2: Хватает ли валюты?
         int currentCost = GetCurrentSkillCost(newSkill);
         if (CurrentSaveData.currency < currentCost)
         {
@@ -90,46 +101,32 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        // --- ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ, СОВЕРШАЕМ ПОКУПКУ ---
         Debug.Log($"<color=green>Улучшен навык: {newSkill.skillName} до уровня {currentLevel + 1}</color>");
 
-        
-
-        // 1. Списываем валюту
         CurrentSaveData.currency -= currentCost;
-
-        // 2. ДОБАВЛЯЕМ ПОТРАЧЕННУЮ СУММУ В ОБЩИЙ КОТЕЛ
         CurrentSaveData.totalCurrencySpent += currentCost;
-
-        // 2. Увеличиваем общий счетчик покупок для инфляции
         CurrentSaveData.totalPurchasesMade++;
 
-        // 3. Обновляем уровень навыка в словаре
         if (currentLevel > 0)
         {
             CurrentSaveData.unlockedPassives[newSkill.skillID]++;
         }
-        else // Если это первая покупка, добавляем запись в словарь
+        else
         {
             CurrentSaveData.unlockedPassives.Add(newSkill.skillID, 1);
-            // Активируем уникальное поведение только при первой покупке
             if (newSkill.uniqueBehaviourPrefab != null)
             {
-                Instantiate(newSkill.uniqueBehaviourPrefab, playerStats.transform);
+                // --- ИЗМЕНЕНИЕ ---
+                // Точно так же, при первой покупке, создаем и добавляем в список.
+                GameObject instance = Instantiate(newSkill.uniqueBehaviourPrefab, playerStats.transform);
+                _activeUniqueBehaviours.Add(instance);
             }
         }
 
-        // 4. Применяем эффекты к статам персонажа
         playerStats.ApplyPassive(newSkill);
-
-        // 5. Сохраняем игру
         SaveProgress();
     }
 
-    /// <summary>
-    /// Вычисляет текущую стоимость навыка с учетом инфляции.
-    /// Этот метод будет использоваться UI для отображения цены.
-    /// </summary>
     public int GetCurrentSkillCost(PassiveSkillData skill)
     {
         float costMultiplier = Mathf.Pow(1f + priceInflationRate, CurrentSaveData.totalPurchasesMade);
@@ -137,10 +134,12 @@ public class GameManager : MonoBehaviour
         return currentCost;
     }
 
-    // Отладочная функция сброса
     public void ResetAllProgress()
     {
         Debug.LogWarning("--- ПРОГРЕСС ПОЛНОСТЬЮ СБРОШЕН! ---");
+        // --- ИЗМЕНЕНИЕ ---
+        // При полном сбросе также необходимо уничтожить все объекты.
+        DestroyAllUniqueBehaviours();
         SaveManager.SaveGame(new SaveData());
         UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
     }
@@ -152,26 +151,25 @@ public class GameManager : MonoBehaviour
         Debug.LogWarning("--- СБРОС ВСЕХ ПАССИВНЫХ НАВЫКОВ ---");
 
         int totalRefundAmount = CurrentSaveData.totalCurrencySpent;
-        
 
-
-
-        // Возвращаем валюту
         CurrentSaveData.currency += totalRefundAmount;
         Debug.Log($"Возвращено {totalRefundAmount} валюты. Текущий баланс: {CurrentSaveData.currency}");
 
-        // Очищаем данные
         CurrentSaveData.unlockedPassives.Clear();
         CurrentSaveData.totalPurchasesMade = 0;
         CurrentSaveData.totalCurrencySpent = 0;
 
-        // Сбрасываем статы персонажа до базовых
         if (playerStats != null)
         {
             playerStats.ResetToDefaults();
         }
 
-        // Обновляем UI магазина, чтобы он показал сброшенный прогресс
+        // --- ИЗМЕНЕНИЕ ---
+        // ЭТО КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ.
+        // После сброса статов мы уничтожаем все префабы уникальных перков.
+        // Это вызовет на них OnDisable(), отпишет их от событий и уберет их эффекты.
+        DestroyAllUniqueBehaviours();
+
         if (shopUIManager != null)
         {
             shopUIManager.UpdateAllPerkVisuals();
@@ -181,7 +179,29 @@ public class GameManager : MonoBehaviour
             Debug.LogWarning("Ссылка на Shop UI Manager не установлена в GameManager, UI не будет обновлен после сброса.");
         }
 
-        // Сохраняем "чистые" данные
         SaveProgress();
+    }
+
+    private void HandleEnemyDied()
+    {
+        if (CurrentSaveData == null) return;
+        CurrentSaveData.totalKills++;
+        GameEvents.ReportKillCountChanged(CurrentSaveData.totalKills);
+        SaveProgress();
+    }
+
+    // --- ИЗМЕНЕНИЕ ---
+    // Новый метод, который централизованно уничтожает все отслеживаемые объекты.
+    private void DestroyAllUniqueBehaviours()
+    {
+        foreach (GameObject behaviour in _activeUniqueBehaviours)
+        {
+            if (behaviour != null)
+            {
+                Destroy(behaviour);
+            }
+        }
+        _activeUniqueBehaviours.Clear();
+        Debug.Log("Все активные уникальные поведения были уничтожены.");
     }
 }

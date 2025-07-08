@@ -11,5 +11,7 @@ public enum SkillTag
     Melee = 1 << 2,       // 4
     Aura = 1 << 3,        // 8
     Summon = 1 << 4,      // 16
-    Shield = 1 << 5       // 32
+    Shield = 1 << 5,      // 32
+    Everything = ~0
+
 }

@@ -24,14 +24,20 @@ public class PlayerStats : MonoBehaviour
 
     private void InitializeStats()
     {
-        _stats.Add(StatType.MaxHealth, new Stat(100));
-        _stats.Add(StatType.MoveSpeed, new Stat(60));
+        _stats.Add(StatType.MaxHealth, new Stat(100)); // 100% базового здоровья
+        _stats.Add(StatType.MoveSpeed, new Stat(60)); // 60 flat базовой скорости передвижения
         _stats.Add(StatType.Damage, new Stat(100)); // 100% базового урона
         _stats.Add(StatType.AreaOfEffect, new Stat(100)); // 100% базового радиуса
         _stats.Add(StatType.Cooldown, new Stat(100)); // 100% базовой перезарядки
         _stats.Add(StatType.ProjectileSpeed, new Stat(100)); // 100% базовой скорости
-        _stats.Add(StatType.Amount, new Stat(1));
-        _stats.Add(StatType.PickupRadius, new Stat(10));
+        _stats.Add(StatType.Amount, new Stat(1)); // 1 flat базового количества снарядов
+        _stats.Add(StatType.PickupRadius, new Stat(10)); // 10 flat базового радиуса подбора
+        _stats.Add(StatType.ExperienceGain, new Stat(100)); // 100% базового получения опыта
+        _stats.Add(StatType.CurrencyGain, new Stat(100)); // 100% базового получения валюты
+        _stats.Add(StatType.Armor, new Stat(0)); // 0 flat базовой брони 
+        _stats.Add(StatType.Duration, new Stat(100)); // 100% базовой длительности умений
+        _stats.Add(StatType.Luck, new Stat(0)); // 0 flat базовой удачи (может влиять на шанс крита и выпадение наград)
+
         // ... добавьте сюда все остальные статы из вашего enum StatType
     }
 
