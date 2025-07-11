@@ -9,6 +9,7 @@ TagManager:
   - SwarmSpawnPoint
   - Grindable
   - WallRunnable
+  - Enemy
   layers:
   - Default
   - TransparentFX
