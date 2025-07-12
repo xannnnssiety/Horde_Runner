@@ -82,6 +82,8 @@ public class PlayerDash : MonoBehaviour
 
     private void StartDash()
     {
+        GameEvents.ReportDashStarted(transform.position, transform.rotation);
+
         IsDashing = true;
         cooldownTimer = dashCooldown;
         dashTimer = dashDuration;

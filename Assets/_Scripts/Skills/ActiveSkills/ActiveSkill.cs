@@ -23,15 +23,17 @@ public abstract class ActiveSkill : MonoBehaviour
 
     // Ссылка на PlayerStats
     protected PlayerStats playerStats;
+    protected float effectivenessMultiplier = 1.0f;
 
     /// <summary>
     /// Инициализирует умение, получает ссылки и в первый раз рассчитывает характеристики.
     /// Вызывается из ActiveSkillManager при добавлении умения.
     /// </summary>
-    public virtual void Initialize(ActiveSkillData data, PlayerStats stats)
+    public virtual void Initialize(ActiveSkillData data, PlayerStats stats, float effectiveness = 1.0f)
     {
         this.skillData = data;
         this.playerStats = stats;
+        this.effectivenessMultiplier = effectiveness;
         RecalculateStats();
     }
 
@@ -44,10 +46,10 @@ public abstract class ActiveSkill : MonoBehaviour
         if (playerStats == null || skillData == null) return;
 
         // Рассчитываем итоговые значения.
-        currentDamage = skillData.baseDamage * (playerStats.GetStat(StatType.Damage) / 100f);
-        currentAreaOfEffect = skillData.baseAreaOfEffect * (playerStats.GetStat(StatType.AreaOfEffect) / 100f);
+        currentDamage = skillData.baseDamage * (playerStats.GetStat(StatType.Damage) / 100f) * effectivenessMultiplier;
+        currentAreaOfEffect = skillData.baseAreaOfEffect * (playerStats.GetStat(StatType.AreaOfEffect) / 100f) * effectivenessMultiplier;
         currentCooldown = skillData.baseCooldown * (playerStats.GetStat(StatType.Cooldown) / 100f);
-        currentProjectileSpeed = skillData.baseProjectileSpeed * (playerStats.GetStat(StatType.ProjectileSpeed) / 100f);
+        currentProjectileSpeed = skillData.baseProjectileSpeed * (playerStats.GetStat(StatType.ProjectileSpeed) / 100f) * effectivenessMultiplier;
         currentDuration = skillData.baseDuration * (playerStats.GetStat(StatType.Duration) / 100f);
         currentAmount = skillData.baseAmount + ((int)playerStats.GetStat(StatType.Amount) - 1);
     }

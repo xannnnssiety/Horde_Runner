@@ -24,6 +24,12 @@ public class GameManager : MonoBehaviour
 
     void Awake()
     {
+        /*LoadProgress();*/
+    }
+
+    private void Start()
+    {
+        // Start() гарантированно вызывается после всех Awake().
         LoadProgress();
     }
 
@@ -41,8 +47,22 @@ public class GameManager : MonoBehaviour
 
     public void LoadProgress()
     {
+        playerStats.InitializeAndReset();
         CurrentSaveData = SaveManager.LoadGame();
         CurrentSaveData.currency = 100000;
+
+        // --- ДИАГНОСТИЧЕСКИЙ ТЕСТ ---
+        if (CurrentSaveData != null && CurrentSaveData.unlockedPassives.Count > 0)
+        {
+            Debug.Log($"<color=green>УСПЕШНАЯ ЗАГРУЗКА:</color> Загружено {CurrentSaveData.unlockedPassives.Count} типов перков.");
+
+        }
+        else
+        {
+            Debug.LogWarning("<color=yellow>ПРЕДУПРЕЖДЕНИЕ:</color> Загружен пустой файл сохранения или файл не найден. Список купленных перков пуст.");
+        }
+        // --- КОНЕЦ ТЕСТА ---
+
         ApplyAllLoadedPassives();
     }
 
@@ -58,6 +78,7 @@ public class GameManager : MonoBehaviour
         // --- ИЗМЕНЕНИЕ ---
         // Перед применением всех перков (например, при загрузке игры)
         // уничтожаем все старые объекты, чтобы избежать их дублирования.
+        /*playerStats.ResetToDefaults();*/
         DestroyAllUniqueBehaviours();
 
         foreach (var unlockedPassive in CurrentSaveData.unlockedPassives)
@@ -82,6 +103,14 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
+
+        ActiveSkillManager skillManager = FindObjectOfType<ActiveSkillManager>();
+
+        if (skillManager != null)
+        {
+            skillManager.ForceRecalculateAllSkills();
+        }
+
     }
 
     public void UnlockPassive(PassiveSkillData newSkill)
@@ -187,7 +216,7 @@ public class GameManager : MonoBehaviour
         if (CurrentSaveData == null) return;
         CurrentSaveData.totalKills++;
         GameEvents.ReportKillCountChanged(CurrentSaveData.totalKills);
-        SaveProgress();
+        /*SaveProgress();*/ // Убрал SaveProgress() отсюда, чтобы не сохранять игру на каждое убийство.
     }
 
     // --- ИЗМЕНЕНИЕ ---

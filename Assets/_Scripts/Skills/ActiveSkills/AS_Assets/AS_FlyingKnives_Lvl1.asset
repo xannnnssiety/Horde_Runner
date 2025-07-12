@@ -21,7 +21,7 @@ MonoBehaviour:
   baseDamage: 10
   baseCooldown: 1
   baseAreaOfEffect: 1
-  baseAmount: 10
+  baseAmount: 1
   baseProjectileSpeed: 100
   baseDuration: 3
   nextLevelSkill: {fileID: 0}

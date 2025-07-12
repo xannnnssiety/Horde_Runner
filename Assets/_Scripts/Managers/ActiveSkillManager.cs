@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static PlayerController;
 
 /// <summary>
 /// Главный "дирижер" для всех активных умений игрока.
@@ -18,12 +19,15 @@ public class ActiveSkillManager : MonoBehaviour
     [Header("Ссылки")]
     [Tooltip("Ссылка на компонент PlayerStats. Если не указана, будет искаться на этом же объекте.")]
     [SerializeField] private PlayerStats playerStats;
+    
 
     // "Арсенал" игрока - список всех активных умений, которые у него есть
     private readonly List<ActiveSkillInstance> _activeSkills = new List<ActiveSkillInstance>();
 
     private void Awake()
     {
+        
+
         // Автоматически находим PlayerStats, если он не указан в инспекторе
         if (playerStats == null)
         {
@@ -74,6 +78,9 @@ public class ActiveSkillManager : MonoBehaviour
             }
         }
     }
+
+
+
 
     /// <summary>
     /// Добавляет новое умение в арсенал игрока или улучшает существующее.
@@ -136,4 +143,10 @@ public class ActiveSkillManager : MonoBehaviour
             instance.skillLogic.RecalculateStats();
         }
     }
+
+    public void ForceRecalculateAllSkills()
+    {
+        RecalculateAllSkillStats();
+    }
+
 }

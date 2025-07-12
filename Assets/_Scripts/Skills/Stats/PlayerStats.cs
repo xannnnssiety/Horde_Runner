@@ -12,13 +12,20 @@ public class PlayerStats : MonoBehaviour
     // ѕолезно дл€ обновлени€ UI.
     public event Action<StatType, float> OnStatChanged;
 
-  
+    
 
     private void Awake()
     {
         // »нициализируем все статы их базовыми значени€ми.
         // Ёти значени€ можно вынести в ScriptableObject с базовыми настройками персонажа.
         InitializeStats();
+    }
+
+    public void InitializeAndReset()
+    {
+        _stats.Clear(); // Ќа вс€кий случай очищаем словарь
+        InitializeStats(); // «аполн€ем его базовыми значени€ми
+        Debug.Log("PlayerStats успешно инициализирован и сброшен.");
     }
 
 

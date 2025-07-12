@@ -51,6 +51,11 @@ public class DebugStatsDisplay : MonoBehaviour
         UpdateFullDisplay();
     }
 
+    private void Update()
+    {
+        UpdateFullDisplay();
+    }
+
     private void UpdateFullDisplay()
     {
         _stringBuilder.Clear();

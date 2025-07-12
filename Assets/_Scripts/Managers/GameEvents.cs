@@ -5,14 +5,12 @@ public static class GameEvents
 {
     // Старое событие, которое просто сообщает "враг умер"
     public static event Action OnEnemyDied;
-
-    // --- ИЗМЕНЕНИЕ ---
-    // Новое событие, которое сообщает "счетчик убийств изменился" и передает новый итог.
     public static event Action<int> OnKillCountChanged;
 
     [Tooltip("Событие, которое срабатывает, когда игрок использует активное умение.")]
     public static event Action<ActiveSkillData> OnPlayerAbilityUsed;
 
+    public static event Action<Vector3, Quaternion> OnDashStarted;
     public static void ReportEnemyDied()
     {
         OnEnemyDied?.Invoke();
@@ -33,6 +31,11 @@ public static class GameEvents
     public static void ReportPlayerAbilityUsed(ActiveSkillData skillData)
     {
         OnPlayerAbilityUsed?.Invoke(skillData);
+    }
+
+    public static void ReportDashStarted(Vector3 startPosition, Quaternion startRotation)
+    {
+        OnDashStarted?.Invoke(startPosition, startRotation);
     }
 
 }
