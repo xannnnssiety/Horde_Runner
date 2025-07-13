@@ -21,10 +21,14 @@ public class TestSkillAdder : MonoBehaviour
     [Header("Ссылки")]
     [Tooltip("Ссылка на менеджер активных умений на игроке. Перетащите сюда объект с этим компонентом.")]
     public ActiveSkillManager skillManager;
+    [Tooltip("Ссылка на менеджер повышения уровня.")]
+    public LevelUpManager levelUpManager; 
 
     [Header("Настройки теста")]
     [Tooltip("Список умений для тестирования по нажатию клавиш.")]
     public List<SkillTestEntry> skillsToTest;
+    [Tooltip("Клавиша для вызова экрана повышения уровня.")]
+    public KeyCode levelUpKey = KeyCode.L; 
 
     void Update()
     {
@@ -48,6 +52,18 @@ public class TestSkillAdder : MonoBehaviour
                     skillManager.AddSkill(entry.skillToAdd);
                 }
             }
+
         }
+
+        if (Input.GetKeyDown(levelUpKey))
+        {
+            // И если ссылка на менеджер установлена
+            if (levelUpManager != null)
+            {
+                Debug.Log("Нажата клавиша повышения уровня. Показываем экран выбора.");
+                levelUpManager.ShowSelectionScreen();
+            }
+        }
+
     }
 }

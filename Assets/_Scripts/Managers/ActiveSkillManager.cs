@@ -54,6 +54,12 @@ public class ActiveSkillManager : MonoBehaviour
         }
     }
 
+    public List<ActiveSkillData> GetCurrentlyEquippedSkills()
+    {
+        // »спользуем Linq, чтобы извлечь только ActiveSkillData из нашего списка
+        return _activeSkills.Select(instance => instance.skillLogic.skillData).ToList();
+    }
+
     private void Update()
     {
         // ѕроходим по каждому умению в нашем арсенале
