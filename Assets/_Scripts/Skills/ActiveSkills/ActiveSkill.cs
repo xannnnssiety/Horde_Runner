@@ -20,6 +20,8 @@ public abstract class ActiveSkill : MonoBehaviour
     protected int currentAmount;
     protected float currentProjectileSpeed;
     protected float currentDuration;
+    protected float currentRicochetChance;
+    protected int currentRicochetCount;
 
     // —сылка на PlayerStats
     protected PlayerStats playerStats;
@@ -52,6 +54,8 @@ public abstract class ActiveSkill : MonoBehaviour
         currentProjectileSpeed = skillData.baseProjectileSpeed * (playerStats.GetStat(StatType.ProjectileSpeed) / 100f) * effectivenessMultiplier;
         currentDuration = skillData.baseDuration * (playerStats.GetStat(StatType.Duration) / 100f);
         currentAmount = skillData.baseAmount + ((int)playerStats.GetStat(StatType.Amount) - 1);
+        currentRicochetChance = playerStats.GetStat(StatType.RicochetChance);
+        currentRicochetCount = (int)playerStats.GetStat(StatType.RicochetCount);
     }
 
     /// <summary>

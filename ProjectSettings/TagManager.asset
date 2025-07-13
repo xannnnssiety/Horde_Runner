@@ -21,8 +21,8 @@ TagManager:
   - Grindable
   - WallRunnable
   - WallJumpable
-  - 
-  - 
+  - Player
+  - Projectiles
   - 
   - 
   - 

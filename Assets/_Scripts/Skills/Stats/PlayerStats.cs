@@ -44,7 +44,8 @@ public class PlayerStats : MonoBehaviour
         _stats.Add(StatType.Armor, new Stat(0)); // 0 flat базовой брони 
         _stats.Add(StatType.Duration, new Stat(100)); // 100% базовой длительности умений
         _stats.Add(StatType.Luck, new Stat(0)); // 0 flat базовой удачи (может влиять на шанс крита и выпадение наград)
-
+        _stats.Add(StatType.RicochetChance, new Stat(0)); // Базовый шанс 0%
+        _stats.Add(StatType.RicochetCount, new Stat(0));  // Базовое количество отскоков 0
         // ... добавьте сюда все остальные статы из вашего enum StatType
     }
 

@@ -1,33 +1,96 @@
 using UnityEngine;
+using System.Collections.Generic; // РћСЃС‚Р°РІР»СЏРµРј РЅР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№, РЅРѕ СЃРїРёСЃРѕРє Р±РѕР»СЊС€Рµ РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ
+using System.Linq;
 
-/// <summary>
-/// Управляет движением и временем жизни простого снаряда.
-/// Получает свои характеристики извне при инициализации.
-/// </summary>
+[RequireComponent(typeof(Rigidbody))]
 public class ProjectileMover : MonoBehaviour
 {
-    private float _speed;
-    private float _lifetime;
+    public float ricochetSearchRadius = 20f;
 
-    /// <summary>
-    /// Инициализирует снаряд, передавая ему скорость и время жизни.
-    /// Вызывается умением, которое его создало.
-    /// </summary>
-    public void Initialize(float speed, float lifetime)
+    private Rigidbody _rigidbody;
+    private float _damage;
+    private float _initialSpeed;
+    private int _ricochetsLeft;
+    private bool _isRicocheting = false;
+
+    // --- РР—РњР•РќР•РќРР•: РЎРїРёСЃРѕРє РїРѕСЂР°Р¶РµРЅРЅС‹С… С†РµР»РµР№ Р±РѕР»СЊС€Рµ РЅРµ РЅСѓР¶РµРЅ ---
+    // private List<Transform> _hitTargets = new List<Transform>();
+
+    public void Initialize(Vector3 direction, float speed, float lifetime, float damage, float ricochetChance, int ricochetCount)
     {
-        this._speed = speed;
-        this._lifetime = lifetime;
+        _rigidbody = GetComponent<Rigidbody>();
+        _initialSpeed = speed;
+        _rigidbody.linearVelocity = direction * _initialSpeed;
+        this._damage = damage;
+        this._ricochetsLeft = ricochetCount;
 
-        // Уничтожаем объект по истечении переданного времени жизни
-        Destroy(gameObject, this._lifetime);
+        if (Random.Range(0f, 100f) < ricochetChance)
+        {
+            _isRicocheting = true;
+        }
+
+        Destroy(gameObject, lifetime);
     }
 
-    void Update()
+    private void OnCollisionEnter(Collision collision)
     {
-        // Если скорость не была установлена (например, при ошибке), ничего не делаем
-        if (_speed <= 0) return;
+        // --- РР—РњР•РќР•РќРР•: РЈР±СЂР°РЅР° РїСЂРѕРІРµСЂРєР° РЅР° СѓР¶Рµ РїРѕСЂР°Р¶РµРЅРЅС‹Рµ С†РµР»Рё ---
+        if (collision.gameObject.CompareTag("Enemy"))
+        {
+            HandleCollision(collision.transform);
+        }
+    }
 
-        // Летим вперед относительно своего локального направления
-        transform.Translate(Vector3.forward * _speed * Time.deltaTime);
+    private void HandleCollision(Transform target)
+    {
+/*        if (target.TryGetComponent<EnemyHealth>(out var enemyHealth))
+        {
+            enemyHealth.TakeDamage(_damage);
+        }*/
+        // --- РР—РњР•РќР•РќРР•: Р‘РѕР»СЊС€Рµ РЅРµ РґРѕР±Р°РІР»СЏРµРј С†РµР»СЊ РІ СЃРїРёСЃРѕРє ---
+        // _hitTargets.Add(target);
+
+        if (_isRicocheting && _ricochetsLeft > 0)
+        {
+            Transform nextTarget = FindNextTarget(target);
+            if (nextTarget != null)
+            {
+                _ricochetsLeft--;
+                Vector3 newDirection = (nextTarget.position - transform.position).normalized;
+                _rigidbody.linearVelocity = Vector3.zero;
+                _rigidbody.linearVelocity = newDirection * _initialSpeed;
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    private Transform FindNextTarget(Transform currentTarget)
+    {
+        Collider[] hits = Physics.OverlapSphere(transform.position, ricochetSearchRadius);
+
+        // --- РљР›Р®Р§Р•Р’РћР• РРЎРџР РђР’Р›Р•РќРР• ---
+        // 1. РќР°С…РѕРґРёРј РІСЃРµС… РІР°Р»РёРґРЅС‹С… РІСЂР°РіРѕРІ РґР»СЏ СЂРёРєРѕС€РµС‚Р° Рё РїРѕРјРµС‰Р°РµРј РёС… РІ РјР°СЃСЃРёРІ.
+        Collider[] validTargets = hits
+            .Where(hit => hit.transform != this.transform && hit.transform != currentTarget && hit.CompareTag("Enemy"))
+            .ToArray();
+
+        // 2. Р•СЃР»Рё РІР°Р»РёРґРЅС‹С… С†РµР»РµР№ РЅРµС‚, РІРѕР·РІСЂР°С‰Р°РµРј null, С‡С‚РѕР±С‹ СЃРЅР°СЂСЏРґ СѓРЅРёС‡С‚РѕР¶РёР»СЃСЏ.
+        if (validTargets.Length == 0)
+        {
+            return null;
+        }
+
+        // 3. Р’С‹Р±РёСЂР°РµРј СЃР»СѓС‡Р°Р№РЅС‹Р№ РёРЅРґРµРєСЃ РёР· РјР°СЃСЃРёРІР° РІР°Р»РёРґРЅС‹С… С†РµР»РµР№.
+        int randomIndex = Random.Range(0, validTargets.Length);
+
+        // 4. Р’РѕР·РІСЂР°С‰Р°РµРј transform СЃР»СѓС‡Р°Р№РЅРѕР№ С†РµР»Рё.
+        return validTargets[randomIndex].transform;
     }
 }

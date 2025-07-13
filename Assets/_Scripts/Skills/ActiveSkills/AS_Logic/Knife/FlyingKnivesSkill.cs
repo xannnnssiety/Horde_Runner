@@ -85,29 +85,20 @@ public class FlyingKnivesSkill : ActiveSkill
             int randomIndex = Random.Range(0, _firePoints.Length);
             Transform spawnPoint = _firePoints[randomIndex];
 
-            Vector3 targetDirection;
-            if (target != null)
-            {
-                targetDirection = (target.position - spawnPoint.position).normalized;
-            }
-            else
-            {
-                targetDirection = spawnPoint.forward;
-            }
+            Vector3 targetDirection = (target != null) ? (target.position - spawnPoint.position).normalized : spawnPoint.forward;
 
-            Quaternion projectileRotation = Quaternion.LookRotation(targetDirection);
-            GameObject knifeObject = Instantiate(knifeProjectilePrefab, spawnPoint.position, projectileRotation);
+            // Мы больше не поворачиваем нож, мы просто создаем его с базовым поворотом
+            GameObject knifeObject = Instantiate(knifeProjectilePrefab, spawnPoint.position, spawnPoint.rotation);
 
             knifeObject.transform.localScale *= currentAreaOfEffect;
 
             ProjectileMover mover = knifeObject.GetComponent<ProjectileMover>();
             if (mover != null)
             {
-                mover.Initialize(currentProjectileSpeed, currentDuration);
+                // --- ИЗМЕНЕНИЕ: Передаем рассчитанное НАПРАВЛЕНИЕ ---
+                mover.Initialize(targetDirection, currentProjectileSpeed, currentDuration, currentDamage, currentRicochetChance, currentRicochetCount);
             }
 
-            // --- КЛЮЧЕВОЕ ИЗМЕНЕНИЕ ---
-            // Делаем паузу перед следующей итерацией цикла.
             yield return new WaitForSeconds(volleyDelay);
         }
 
@@ -115,7 +106,6 @@ public class FlyingKnivesSkill : ActiveSkill
         {
             Destroy(gameObject);
         }
-
     }
 
     /// <summary>

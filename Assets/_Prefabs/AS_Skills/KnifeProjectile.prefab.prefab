@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 588879088876365905}
   - component: {fileID: 3330381903468479494}
   - component: {fileID: 6491740319857836894}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: KnifeProjectile.prefab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -58,11 +58,11 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 1
+  m_UseGravity: 0
+  m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2
 --- !u!65 &1620875126410923740
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -78,7 +78,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -96,8 +96,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 27b35b9cd5877be4e9d55055f19b7427, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 20
-  lifetime: 3
+  ricochetSearchRadius: 30
 --- !u!2083052967 &3330381903468479494
 VisualEffect:
   m_ObjectHideFlags: 0

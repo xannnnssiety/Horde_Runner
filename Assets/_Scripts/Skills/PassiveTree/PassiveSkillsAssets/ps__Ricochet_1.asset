@@ -10,17 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 54d8297b25781a14ea040ae6858181c4, type: 3}
-  m_Name: ps_Cooldown_1
+  m_Name: ps__Ricochet_1
   m_EditorClassIdentifier: 
-  skillID: Cooldown_1
-  skillName: Cooldown
-  description: "\u041E\u0442\u043A\u0430\u0442 -8%"
+  skillID: Ricochet_1
+  skillName: Ricochet
+  description: "+5% \u043A \u0448\u0430\u043D\u0441\u0443 \u0440\u0438\u043A\u043E\u0448\u0435\u0442\u0430
+    \u0438 +1 \u043A \u043A\u043E\u043B-\u0432\u0443 \u0440\u0438\u043A\u043E\u0448\u0435\u0442\u043E\u0432 "
   icon: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
-  baseCost: 122
-  maxPurchaseCount: 5
+  baseCost: 6666
+  maxPurchaseCount: 1
   modifiers:
-  - Stat: 6
-    Value: -8
-    Type: 1
-    AppliesToTags: -1
+  - Stat: 10
+    Value: 100
+    Type: 0
+    AppliesToTags: 1
+  - Stat: 11
+    Value: 10
+    Type: 0
+    AppliesToTags: 1
   uniqueBehaviourPrefab: {fileID: 0}
