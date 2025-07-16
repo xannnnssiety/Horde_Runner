@@ -22,7 +22,7 @@ MonoBehaviour:
   baseCooldown: 1
   baseAreaOfEffect: 1
   baseAmount: 1
-  baseProjectileSpeed: 100
+  baseProjectileSpeed: 77
   baseDuration: 3
   nextLevelSkill: {fileID: 0}
   ultimateVersionSkill: {fileID: 0}

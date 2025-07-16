@@ -21,7 +21,7 @@ MonoBehaviour:
   maxPurchaseCount: 1
   modifiers:
   - Stat: 10
-    Value: 100
+    Value: 1000
     Type: 0
     AppliesToTags: 1
   - Stat: 11
